@@ -61,6 +61,9 @@ export class AuthService {
       slug: uniqueSlug,
       shortId: shortId,
       status: "ACTIVE",
+      plan: "TRIAL",
+      planStatus: "TRIAL",
+      planExpiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days trial
     });
 
     // Create head-office branch
