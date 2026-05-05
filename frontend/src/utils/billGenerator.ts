@@ -170,7 +170,7 @@ export const generateEwayBillPDF = (sale: Sale, businessName: string, supplierGs
   currY += 7;
   doc.setFont("helvetica", "normal");
   doc.text(`Total Value: Rs.${sale.totalAmount.toLocaleString("en-IN")}`, leftX, currY);
-  doc.text(`HSN Codes: ${[...new Set(sale.items.map(i => (i as any).hsnCode || "N/A"))].join(", ")}`, midX, currY);
+  doc.text(`HSN Codes: ${[...new Set(sale.items.map(i => i.hsnCode || "N/A"))].join(", ")}`, midX, currY);
   currY += 15;
 
   // Section 4: Part B (Transportation)

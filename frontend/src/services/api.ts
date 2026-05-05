@@ -202,6 +202,7 @@ export interface SaleItem {
   taxAmount: number;
   totalAmount: number;
   profitAmount: number;
+  hsnCode?: string;
 }
 
 export interface Sale {
@@ -212,6 +213,7 @@ export interface Sale {
   saleDateAt: string;
   customerName?: string;
   customerPhone?: string;
+  customerGst?: string;
   items: SaleItem[];
   subtotal: number;
   discountAmount: number;
