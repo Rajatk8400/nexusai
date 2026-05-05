@@ -92,6 +92,6 @@ router.get("/purchases",  ...businessGuard, (req, res, next) => purchaseControll
 router.post("/purchases", ...businessGuard, (req, res, next) => purchaseController.create(req as any, res, next));
 
 // ── Health ────────────────────────────────────────────────────
-router.get("/health", (req, res) => res.json({ status: "ok", timestamp: new Date().toISOString() }));
+router.get("/health", (req, res) => res.json({ status: "ok", version: "2.1.0", timestamp: new Date().toISOString() }));
 
 export default router;
