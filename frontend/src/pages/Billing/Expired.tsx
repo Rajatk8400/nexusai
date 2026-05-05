@@ -30,6 +30,7 @@ export default function BillingExpiredPage() {
   const [selectedPlan, setSelectedPlan] = useState<typeof PLANS[0] | null>(null);
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<"UPI" | "PAYPAL" | null>(null);
+  const [transactionId, setTransactionId] = useState("");
   const [processing, setProcessing] = useState(false);
 
   const handleSelectPlan = (plan: typeof PLANS[0]) => {
@@ -48,7 +49,10 @@ export default function BillingExpiredPage() {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${localStorage.getItem("nexusai_access_token")}`
         },
-        body: JSON.stringify({ planId: selectedPlan.id })
+        body: JSON.stringify({ 
+          planId: selectedPlan.id,
+          transactionId: transactionId 
+        })
       });
 
       if (!response.ok) throw new Error("Upgrade failed");
@@ -200,7 +204,7 @@ export default function BillingExpiredPage() {
 
             {paymentMethod === "UPI" && (
               <div className="p-4 bg-slate-50 rounded-xl border border-dashed border-slate-200 text-center space-y-4">
-                <p className="text-xs text-slate-500">Scan this QR or click to pay with any UPI app</p>
+                <p className="text-xs text-slate-500 font-bold uppercase tracking-wider">Step 1: Scan & Pay</p>
                 <div className="bg-white p-2 inline-block rounded-lg shadow-sm">
                    <img 
                     src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(upiLink)}`} 
@@ -208,8 +212,21 @@ export default function BillingExpiredPage() {
                     className="w-32 h-32"
                    />
                 </div>
-                <div className="pt-2">
+                <div>
+                   <p className="text-[10px] text-slate-400">UPI ID: nexusai@slc</p>
                    <a href={upiLink} className="text-blue-600 text-sm font-bold hover:underline">Open in UPI App</a>
+                </div>
+                
+                <div className="pt-4 border-t border-slate-200 text-left space-y-2">
+                   <p className="text-xs text-slate-500 font-bold uppercase tracking-wider">Step 2: Enter Transaction ID (UTR)</p>
+                   <input 
+                    type="text"
+                    placeholder="Enter 12-digit UTR Number"
+                    value={transactionId}
+                    onChange={(e) => setTransactionId(e.target.value)}
+                    className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:border-blue-500 outline-none transition-all font-mono"
+                   />
+                   <p className="text-[9px] text-slate-400">Found in your payment app history after successful payment.</p>
                 </div>
               </div>
             )}
@@ -218,7 +235,7 @@ export default function BillingExpiredPage() {
               <Button 
                 variant="primary" 
                 fullWidth 
-                disabled={!paymentMethod || processing}
+                disabled={!paymentMethod || (paymentMethod === "UPI" && !transactionId) || processing}
                 onClick={handlePaymentSuccess}
               >
                 {processing ? "Processing..." : paymentMethod ? `Pay ₹${selectedPlan.price.toLocaleString("en-IN")}` : "Select a method"}

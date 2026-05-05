@@ -6,8 +6,10 @@ import { AuthRequest } from "../middlewares/auth.middleware";
 export const businessController = {
   async upgrade(req: AuthRequest, res: Response, next: NextFunction) {
     try {
-      const { planId } = req.body; // SIX_MONTHS or YEARLY
+      const { planId, transactionId } = req.body; // SIX_MONTHS or YEARLY
       const businessId = req.user!.businessId!;
+
+      if (!transactionId) throw new Error("Transaction ID is required for upgrade");
       
       let durationMonths = 0;
       if (planId === "SIX_MONTHS") durationMonths = 6;
@@ -22,6 +24,7 @@ export const businessController = {
         { 
           plan: planId, 
           planExpiresAt: expiresAt,
+          lastTransactionId: transactionId,
           status: "ACTIVE" 
         },
         { new: true }

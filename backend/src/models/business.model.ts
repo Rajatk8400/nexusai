@@ -20,6 +20,7 @@ export interface IBusiness extends Document<string> {
   upiId?: string;
   plan: "TRIAL" | "SIX_MONTHS" | "YEARLY";
   planExpiresAt: Date;
+  lastTransactionId?: string;
   deletedAt?: Date;
   createdAt: Date;
   updatedAt: Date;
@@ -49,6 +50,7 @@ const BusinessSchema = new Schema<IBusiness>(
       default: "TRIAL" 
     },
     planExpiresAt: { type: Date, required: true, default: () => new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) },
+    lastTransactionId: { type: String, trim: true },
     deletedAt: { type: Date },
   },
   { timestamps: true }
