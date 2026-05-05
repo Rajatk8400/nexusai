@@ -28,6 +28,7 @@ const businessGuard = [authenticate, requireBusiness, checkSubscription];
 router.get("/admin/stats",      authenticate, (req, res, next) => adminController.getStats(req as any, res, next));
 router.get("/admin/businesses", authenticate, (req, res, next) => adminController.getBusinesses(req as any, res, next));
 router.post("/admin/approve",   authenticate, (req, res, next) => adminController.approveUpgrade(req as any, res, next));
+router.post("/admin/update-plan", authenticate, (req, res, next) => adminController.updatePlan(req as any, res, next));
 
 // ── Auth (public) ─────────────────────────────────────────────
 router.post("/auth/register", validate(authValidation.register), (req, res, next) => authController.register(req as any, res, next));

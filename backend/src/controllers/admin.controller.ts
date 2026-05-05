@@ -51,15 +51,16 @@ export const adminController = {
       const business = await Business.findById(businessId);
       
       if (!business) throw new AppError("Business not found", 404);
-      if (business.planStatus !== "PENDING_UPGRADE") {
-        throw new AppError("Business is not pending an upgrade", 400);
+      if (business.planStatus !== "PENDING_UPGRADE" && !business.lastTransactionId) {
+        throw new AppError("No pending upgrade or transaction found", 400);
       }
 
-      const planId = business.pendingPlanId;
+      const planId = business.pendingPlanId || business.plan;
       let durationMonths = 0;
       if (planId === "SIX_MONTHS") durationMonths = 6;
       else if (planId === "YEARLY") durationMonths = 12;
-      else throw new AppError("Invalid pending plan ID", 400);
+      else if (planId === "TRIAL") durationMonths = 1;
+      else throw new AppError("Invalid plan ID", 400);
 
       const expiresAt = new Date();
       expiresAt.setMonth(expiresAt.getMonth() + durationMonths);
@@ -72,6 +73,27 @@ export const adminController = {
       await business.save();
 
       sendSuccess(res, business, `Upgraded ${business.name} to ${planId} successfully`);
+    } catch (e) { next(e); }
+  },
+
+  async updatePlan(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      if (req.user!.role !== "SUPER_ADMIN") {
+        throw new AppError("Unauthorized", 403);
+      }
+
+      const { businessId, plan, planStatus, planExpiresAt } = req.body;
+      const business = await Business.findById(businessId);
+      
+      if (!business) throw new AppError("Business not found", 404);
+
+      if (plan) business.plan = plan;
+      if (planStatus) business.planStatus = planStatus;
+      if (planExpiresAt) business.planExpiresAt = new Date(planExpiresAt);
+
+      await business.save();
+
+      sendSuccess(res, business, `Updated ${business.name} plan successfully`);
     } catch (e) { next(e); }
   }
 };
