@@ -9,17 +9,18 @@ export default function AdminDashboard() {
   const [stats, setStats] = useState<any>(null);
   const [businesses, setBusinesses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
   
   // Manual Edit State
   const [editingBusiness, setEditingBusiness] = useState<any>(null);
   const [editData, setEditData] = useState({ plan: "", planStatus: "", planExpiresAt: "", status: "" });
   const [updating, setUpdating] = useState(false);
 
-  const fetchData = async () => {
+  const fetchData = async (search?: string) => {
     try {
       const [s, b] = await Promise.all([
         adminApi.getStats(),
-        adminApi.getBusinesses()
+        adminApi.getBusinesses(search)
       ]);
       setStats(s);
       setBusinesses(b);
@@ -32,8 +33,12 @@ export default function AdminDashboard() {
   };
 
   useEffect(() => {
-    fetchData();
-  }, []);
+    const delayDebounceFn = setTimeout(() => {
+      fetchData(searchTerm);
+    }, 500);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchTerm]);
 
   const handleApprove = async (id: string) => {
     if (!confirm("Are you sure you want to approve this upgrade? Please verify the UTR number first.")) return;
@@ -107,9 +112,23 @@ export default function AdminDashboard() {
 
       {/* Businesses Table */}
       <Card className="overflow-hidden border-slate-200">
-        <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
-          <h3 className="font-bold text-slate-800">Business Management</h3>
-          <span className="text-xs text-slate-400 font-medium">{businesses.length} total users</span>
+        <div className="px-6 py-4 border-b border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-slate-50/50">
+          <div>
+            <h3 className="font-bold text-slate-800">Business Management</h3>
+            <span className="text-xs text-slate-400 font-medium">{businesses.length} total users</span>
+          </div>
+          <div className="relative w-full md:w-72">
+            <input 
+              type="text"
+              placeholder="Search by name or ID..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-sm focus:border-blue-500 outline-none transition-all"
+            />
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+            </div>
+          </div>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">

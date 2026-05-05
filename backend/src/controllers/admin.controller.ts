@@ -33,7 +33,21 @@ export const adminController = {
         throw new AppError("Unauthorized", 403);
       }
 
-      const businesses = await Business.find()
+      const { search } = req.query;
+      let query = {};
+      
+      if (search) {
+        const s = String(search);
+        query = {
+          $or: [
+            { name: { $regex: s, $options: "i" } },
+            { shortId: { $regex: s, $options: "i" } },
+            { email: { $regex: s, $options: "i" } }
+          ]
+        };
+      }
+
+      const businesses = await Business.find(query)
         .sort({ createdAt: -1 })
         .select("-settings"); // Exclude heavy settings object
 

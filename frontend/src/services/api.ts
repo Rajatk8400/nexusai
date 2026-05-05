@@ -342,7 +342,7 @@ export const purchaseApi = {
 
 export const adminApi = {
   getStats: () => apiFetch<any>("/admin/stats"),
-  getBusinesses: () => apiFetch<any[]>("/admin/businesses"),
+  getBusinesses: (search?: string) => apiFetch<any[]>(`/admin/businesses${search ? `?search=${encodeURIComponent(search)}` : ""}`),
   approve: (businessId: string) => apiFetch<any>("/admin/approve", { method: "POST", body: JSON.stringify({ businessId }) }),
   updatePlan: (data: { businessId: string; plan?: string; planStatus?: string; planExpiresAt?: string; status?: string }) => 
     apiFetch<any>("/admin/update-plan", { method: "POST", body: JSON.stringify(data) }),
