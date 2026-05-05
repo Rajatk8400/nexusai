@@ -24,6 +24,11 @@ const router = Router();
 // Middleware group for core business features
 const businessGuard = [authenticate, requireBusiness, checkSubscription];
 
+// ── Admin ──────────────────────────────────────────────────────
+router.get("/admin/stats",      authenticate, (req, res, next) => adminController.getStats(req as any, res, next));
+router.get("/admin/businesses", authenticate, (req, res, next) => adminController.getBusinesses(req as any, res, next));
+router.post("/admin/approve",   authenticate, (req, res, next) => adminController.approveUpgrade(req as any, res, next));
+
 // ── Auth (public) ─────────────────────────────────────────────
 router.post("/auth/register", validate(authValidation.register), (req, res, next) => authController.register(req as any, res, next));
 router.post("/auth/login",    validate(authValidation.login), (req, res, next) => authController.login(req as any, res, next));
@@ -85,11 +90,6 @@ router.delete("/expenses/:id", ...businessGuard, (req, res, next) => expenseCont
 // ── Purchases ──────────────────────────────────────────────────
 router.get("/purchases",  ...businessGuard, (req, res, next) => purchaseController.list(req as any, res, next));
 router.post("/purchases", ...businessGuard, (req, res, next) => purchaseController.create(req as any, res, next));
-
-// ── Admin ──────────────────────────────────────────────────────
-router.get("/admin/stats",      authenticate, (req, res, next) => adminController.getStats(req as any, res, next));
-router.get("/admin/businesses", authenticate, (req, res, next) => adminController.getBusinesses(req as any, res, next));
-router.post("/admin/approve",   authenticate, (req, res, next) => adminController.approveUpgrade(req as any, res, next));
 
 // ── Health ────────────────────────────────────────────────────
 router.get("/health", (req, res) => res.json({ status: "ok", timestamp: new Date().toISOString() }));
