@@ -88,6 +88,7 @@ export default function SalesPage() {
   const [customerPhone, setCustomerPhone] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("CASH");
   const [isInterState, setIsInterState] = useState(false);
+  const [includeGST, setIncludeGST] = useState(true);
   const [search, setSearch] = useState("");
   const [searchResults, setSearchResults] = useState<Product[]>([]);
 
@@ -144,7 +145,7 @@ export default function SalesPage() {
     const unitPrice = product.sellingPrice;
     const qty = 1;
     const lineSubtotal = unitPrice * qty;
-    const taxAmount = (lineSubtotal * product.taxRate) / 100;
+    const taxAmount = includeGST ? (lineSubtotal * product.taxRate) / 100 : 0;
     const totalAmount = lineSubtotal + taxAmount;
     const profitAmount = lineSubtotal - product.costPrice * qty;
     
@@ -173,7 +174,7 @@ export default function SalesPage() {
       prev.map((c) => {
         if (c.productId !== productId) return c;
         const lineSubtotal = c.unitPrice * qty - c.discountAmt;
-        const taxAmount = (lineSubtotal * c.taxRate) / 100;
+        const taxAmount = includeGST ? (lineSubtotal * c.taxRate) / 100 : 0;
         const totalAmount = lineSubtotal + taxAmount;
         const profitAmount = lineSubtotal - c.costPrice * qty;
         return { ...c, quantity: qty, taxAmount, totalAmount, profitAmount };
@@ -187,7 +188,7 @@ export default function SalesPage() {
       prev.map((c) => {
         if (c.productId !== productId) return c;
         const lineSubtotal = price * c.quantity - c.discountAmt;
-        const taxAmount = (lineSubtotal * c.taxRate) / 100;
+        const taxAmount = includeGST ? (lineSubtotal * c.taxRate) / 100 : 0;
         const totalAmount = lineSubtotal + taxAmount;
         const profitAmount = lineSubtotal - c.costPrice * c.quantity;
         return { ...c, unitPrice: price, taxAmount, totalAmount, profitAmount };
@@ -222,6 +223,7 @@ export default function SalesPage() {
         customerPhone: customerPhone || undefined,
         paymentMethod,
         isInterState,
+        includeGST,
       });
       setSuccess("Sale created successfully!");
       setCart([]);
@@ -488,6 +490,15 @@ export default function SalesPage() {
                   className="rounded"
                 />
                 Inter-state sale (IGST)
+              </label>
+              <label className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={includeGST}
+                  onChange={(e) => setIncludeGST(e.target.checked)}
+                  className="rounded"
+                />
+                Enable GST Billing
               </label>
             </Card>
 

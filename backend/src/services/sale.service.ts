@@ -32,6 +32,7 @@ export class SaleService {
       notes?: string;
       saleDateAt?: Date;
       isInterState?: boolean;
+      includeGST?: boolean;
     }
   ) {
     const session = await mongoose.startSession();
@@ -57,7 +58,8 @@ export class SaleService {
         const unitPrice = item.unitPrice ?? product.sellingPrice;
         const discountAmt = item.discountAmt ?? 0;
         const lineSubtotal = unitPrice * item.quantity - discountAmt;
-        const gstCalc = calcGST(lineSubtotal, product.taxRate, data.isInterState ?? false);
+        const taxRate = data.includeGST !== false ? product.taxRate : 0;
+        const gstCalc = calcGST(lineSubtotal, taxRate, data.isInterState ?? false);
 
         const lineTotal = lineSubtotal + gstCalc.total;
         const profit = lineSubtotal - product.costPrice * item.quantity;
@@ -78,7 +80,7 @@ export class SaleService {
           unitPrice,
           costPrice: product.costPrice,
           discountAmt,
-          taxRate: product.taxRate,
+          taxRate: taxRate,
           taxAmount: gstCalc.total,
           totalAmount: lineTotal,
           profitAmount: profit,
