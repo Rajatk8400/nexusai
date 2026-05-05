@@ -289,6 +289,23 @@ export class SaleService {
       profitMargin: curr.revenue > 0 ? Math.round((curr.profit / curr.revenue) * 10000) / 100 : 0,
     };
   }
+
+  async updateEwayBill(businessId: string, saleId: string, ewayData: any) {
+    const sale = await Sale.findOne({ _id: saleId, businessId, deletedAt: null });
+    if (!sale) throw new AppError("Sale not found", 404);
+    
+    sale.ewayBill = {
+      ewayBillNumber: ewayData.ewayBillNumber,
+      transporterName: ewayData.transporterName,
+      transporterId: ewayData.transporterId,
+      vehicleNumber: ewayData.vehicleNumber,
+      distance: ewayData.distance,
+      supplyType: ewayData.supplyType,
+    };
+    
+    await sale.save();
+    return sale;
+  }
 }
 
 export const saleService = new SaleService();

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { saleApi, productApi, type Sale, type Product } from "../../services/api";
 import { useAuth } from "../../context/AuthContext";
-import { generateBillPDF, shareToWhatsApp } from "../../utils/billGenerator";
+import { generateBillPDF, generateEwayBillPDF, shareToWhatsApp } from "../../utils/billGenerator";
 import Modal from "../../components/ui/Modal";
 import Button from "../../components/ui/Button";
 import { exportToExcel } from "../../utils/exportToExcel";
@@ -72,6 +72,15 @@ export default function SalesPage() {
   // Bill Modal state
   const [billModalOpen, setBillModalOpen] = useState(false);
   const [selectedSale, setSelectedSale] = useState<Sale | null>(null);
+  const [ewayModalOpen, setEwayModalOpen] = useState(false);
+  const [ewayData, setEwayData] = useState({
+    ewayBillNumber: "",
+    transporterName: "",
+    transporterId: "",
+    vehicleNumber: "",
+    distance: 0,
+    supplyType: "Outward"
+  });
 
   // New Sale form state
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -260,6 +269,35 @@ export default function SalesPage() {
       Date: new Date(s.saleDateAt).toLocaleDateString()
     }));
     exportToExcel(exportData, "Sales_Export");
+  };
+
+  const handleUpdateEway = async () => {
+    if (!selectedSale) return;
+    setSaving(true);
+    try {
+      await saleApi.updateEwayBill(selectedSale.id, ewayData);
+      setSuccess("E-Way Bill details saved!");
+      setEwayModalOpen(false);
+      loadSales();
+    } catch (e: any) {
+      setError(e.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const openEwayModal = (sale: Sale) => {
+    setSelectedSale(sale);
+    setEwayData({
+      ewayBillNumber: sale.ewayBill?.ewayBillNumber || "",
+      transporterName: sale.ewayBill?.transporterName || "",
+      transporterId: sale.ewayBill?.transporterId || "",
+      vehicleNumber: sale.ewayBill?.vehicleNumber || "",
+      distance: sale.ewayBill?.distance || 0,
+      supplyType: sale.ewayBill?.supplyType || "Outward"
+    });
+    setEwayModalOpen(true);
+    setBillModalOpen(false);
   };
 
   return (
@@ -617,6 +655,26 @@ export default function SalesPage() {
               </button>
 
               <button
+                onClick={() => openEwayModal(selectedSale)}
+                className="flex items-center justify-between p-4 border border-slate-200 rounded-xl hover:bg-slate-50 hover:border-amber-200 transition-all group"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-amber-50 text-amber-600 rounded-lg flex items-center justify-center group-hover:bg-amber-100">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="3" width="15" height="13"/><polyline points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+                  </div>
+                  <div className="text-left">
+                    <p className="font-bold text-slate-800">E-Way Bill</p>
+                    <p className="text-xs text-slate-500">Generate transporter document</p>
+                  </div>
+                </div>
+                {selectedSale.ewayBill?.ewayBillNumber ? (
+                  <Badge label="Active" color="green" />
+                ) : (
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-300 group-hover:text-amber-500"><polyline points="9 18 15 12 9 6"/></svg>
+                )}
+              </button>
+
+              <button
                 onClick={() => {
                   const doc = generateBillPDF(selectedSale, business?.name || "NexusAI Business", (business as any)?.gstNumber);
                   doc.autoPrint();
@@ -642,6 +700,96 @@ export default function SalesPage() {
             </div>
           </div>
         )}
+      </Modal>
+
+      {/* E-Way Bill Modal */}
+      <Modal
+        open={ewayModalOpen}
+        onClose={() => setEwayModalOpen(false)}
+        title="E-Way Bill Generation"
+        size="md"
+      >
+        <div className="space-y-4 py-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-slate-500 uppercase">E-Way Bill Number</label>
+              <input 
+                type="text"
+                placeholder="12-digit number"
+                className="w-full p-2 border rounded-xl text-sm"
+                value={ewayData.ewayBillNumber}
+                onChange={(e) => setEwayData({...ewayData, ewayBillNumber: e.target.value})}
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-slate-500 uppercase">Supply Type</label>
+              <select 
+                className="w-full p-2 border rounded-xl text-sm"
+                value={ewayData.supplyType}
+                onChange={(e) => setEwayData({...ewayData, supplyType: e.target.value})}
+              >
+                <option value="Outward">Outward</option>
+                <option value="Inward">Inward</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-xs font-bold text-slate-500 uppercase">Transporter Name</label>
+            <input 
+              type="text"
+              placeholder="e.g. Blue Dart, Delhivery"
+              className="w-full p-2 border rounded-xl text-sm"
+              value={ewayData.transporterName}
+              onChange={(e) => setEwayData({...ewayData, transporterName: e.target.value})}
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-slate-500 uppercase">Vehicle Number</label>
+              <input 
+                type="text"
+                placeholder="e.g. MH-12-AB-1234"
+                className="w-full p-2 border rounded-xl text-sm"
+                value={ewayData.vehicleNumber}
+                onChange={(e) => setEwayData({...ewayData, vehicleNumber: e.target.value})}
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-slate-500 uppercase">Distance (KM)</label>
+              <input 
+                type="number"
+                className="w-full p-2 border rounded-xl text-sm"
+                value={ewayData.distance}
+                onChange={(e) => setEwayData({...ewayData, distance: Number(e.target.value)})}
+              />
+            </div>
+          </div>
+
+          <div className="pt-4 flex gap-3">
+            <Button 
+              variant="secondary" 
+              className="flex-1"
+              onClick={handleUpdateEway}
+              disabled={saving}
+            >
+              Save Details
+            </Button>
+            <Button 
+              variant="primary" 
+              className="flex-1"
+              onClick={() => {
+                if (selectedSale) {
+                  const doc = generateEwayBillPDF(selectedSale, business?.name || "NexusAI Business", (business as any)?.gstNumber);
+                  doc.save(`EWayBill_${selectedSale.invoiceNumber}.pdf`);
+                }
+              }}
+            >
+              Print Preview
+            </Button>
+          </div>
+        </div>
       </Modal>
     </div>
   );

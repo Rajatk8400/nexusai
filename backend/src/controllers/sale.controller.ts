@@ -44,4 +44,15 @@ export const saleController = {
       sendSuccess(res, kpis);
     } catch (e) { next(e); }
   },
+  
+  async updateEwayBill(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const sale = await saleService.updateEwayBill(
+        req.user!.businessId!,
+        req.params["id"]!,
+        req.body
+      );
+      sendSuccess(res, sale, "E-Way Bill details updated");
+    } catch (e) { next(e); }
+  }
 };

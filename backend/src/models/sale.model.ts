@@ -37,6 +37,14 @@ export interface ISale extends Document<string> {
   paymentStatus: "PENDING" | "COMPLETED" | "PARTIAL" | "REFUNDED";
   status: "DRAFT" | "CONFIRMED" | "CANCELLED" | "REFUNDED";
   notes?: string;
+  ewayBill?: {
+    ewayBillNumber?: string;
+    transporterName?: string;
+    transporterId?: string;
+    vehicleNumber?: string;
+    distance?: number;
+    supplyType?: string;
+  };
   createdById?: string;
   metadata?: object;
   deletedAt?: Date;
@@ -93,6 +101,14 @@ const SaleSchema = new Schema<ISale>(
       default: "CONFIRMED",
     },
     notes: { type: String },
+    ewayBill: {
+      ewayBillNumber: { type: String },
+      transporterName: { type: String },
+      transporterId: { type: String },
+      vehicleNumber: { type: String },
+      distance: { type: Number },
+      supplyType: { type: String }
+    },
     createdById: { type: String },
     metadata: { type: Schema.Types.Mixed },
     deletedAt: { type: Date },

@@ -224,6 +224,15 @@ export interface Sale {
   paymentMethod: string;
   paymentStatus: string;
   status: string;
+  notes?: string;
+  ewayBill?: {
+    ewayBillNumber?: string;
+    transporterName?: string;
+    transporterId?: string;
+    vehicleNumber?: string;
+    distance?: number;
+    supplyType?: string;
+  };
   metadata?: any;
   createdAt: string;
 }
@@ -250,6 +259,7 @@ export const saleApi = {
   },
 
   getById: (id: string) => apiFetch<Sale>(`/sales/${id}`),
+  updateEwayBill: (id: string, data: any) => apiFetch<Sale>(`/sales/${id}/eway-bill`, { method: "PUT", body: JSON.stringify(data) }),
 };
 
 // ── Inventory ─────────────────────────────────────────────────

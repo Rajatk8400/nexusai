@@ -58,6 +58,7 @@ router.delete("/products/:id",     ...businessGuard, (req, res, next) => product
 router.get("/sales",     ...businessGuard, (req, res, next) => saleController.list(req as any, res, next));
 router.post("/sales",    ...businessGuard, validate(saleValidation.create), (req, res, next) => saleController.create(req as any, res, next));
 router.get("/sales/:id", ...businessGuard, (req, res, next) => saleController.getById(req as any, res, next));
+router.put("/sales/:id/eway-bill", ...businessGuard, (req, res, next) => saleController.updateEwayBill(req as any, res, next));
 
 // ── Inventory ─────────────────────────────────────────────────
 router.get("/inventory",           ...businessGuard, (req, res, next) => inventoryController.getStock(req as any, res, next));
