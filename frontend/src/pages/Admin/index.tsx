@@ -17,8 +17,9 @@ export default function AdminDashboard() {
       ]);
       setStats(s);
       setBusinesses(b);
-    } catch (e) {
+    } catch (e: any) {
       console.error(e);
+      alert("Admin API Error: " + (e.message || "Unknown error"));
     } finally {
       setLoading(false);
     }

@@ -8,9 +8,11 @@ export const adminController = {
   async getStats(req: AuthRequest, res: Response, next: NextFunction) {
     try {
       if (req.user!.role !== "SUPER_ADMIN") {
+        console.log("Admin Access Denied: User role is", req.user!.role);
         throw new AppError("Unauthorized", 403);
       }
 
+      console.log("Admin Access Granted: Fetching stats...");
       const totalBusinesses = await Business.countDocuments();
       const pendingUpgrades = await Business.countDocuments({ planStatus: "PENDING_UPGRADE" });
       const activePlans = await Business.countDocuments({ planStatus: "ACTIVE" });
