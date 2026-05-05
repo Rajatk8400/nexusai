@@ -16,6 +16,7 @@ import Campaigns from "./pages/Campaigns/index";
 import Expenses from "./pages/Expenses/index";
 import Purchases from "./pages/Purchases/index";
 import BillingExpiredPage from "./pages/Billing/Expired";
+import SuspendedPage from "./pages/Billing/Suspended";
 import AdminDashboard from "./pages/Admin";
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'react-hot-toast';
@@ -30,6 +31,7 @@ export default function App() {
         <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/billing/expired" element={<BillingExpiredPage />} />
+        <Route path="/billing/suspended" element={<SuspendedPage />} />
         <Route
           path="/"
           element={

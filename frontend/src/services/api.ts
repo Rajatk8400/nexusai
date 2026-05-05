@@ -85,6 +85,11 @@ async function apiFetch<T>(
     return null as any;
   }
 
+  if (res.status === 403 && json.message?.toLowerCase().includes("suspended")) {
+    window.location.href = "/billing/suspended";
+    return null as any;
+  }
+
   if (!res.ok) throw new Error(json.message ?? `HTTP ${res.status}`);
   return normalise(json.data) as T;
 }
@@ -339,7 +344,7 @@ export const adminApi = {
   getStats: () => apiFetch<any>("/admin/stats"),
   getBusinesses: () => apiFetch<any[]>("/admin/businesses"),
   approve: (businessId: string) => apiFetch<any>("/admin/approve", { method: "POST", body: JSON.stringify({ businessId }) }),
-  updatePlan: (data: { businessId: string; plan?: string; planStatus?: string; planExpiresAt?: string }) => 
+  updatePlan: (data: { businessId: string; plan?: string; planStatus?: string; planExpiresAt?: string; status?: string }) => 
     apiFetch<any>("/admin/update-plan", { method: "POST", body: JSON.stringify(data) }),
 };
 

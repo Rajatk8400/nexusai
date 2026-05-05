@@ -137,6 +137,12 @@ export default function Sidebar({ collapsed, mobileOpen, onToggle, onClose }: Si
             className={`transition-transform duration-300 ${collapsed ? "rotate-180" : ""}`}
           />
         </button>
+
+        <div className={`px-4 py-3 text-center border-t border-slate-800/50 ${collapsed ? "hidden" : "block"}`}>
+          <p className="text-[9px] font-bold text-slate-600 uppercase tracking-widest">
+            Developed by <span className="text-slate-400">MakeEasy Group</span>
+          </p>
+        </div>
       </aside>
     </>
   );

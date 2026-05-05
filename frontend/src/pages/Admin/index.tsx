@@ -12,7 +12,7 @@ export default function AdminDashboard() {
   
   // Manual Edit State
   const [editingBusiness, setEditingBusiness] = useState<any>(null);
-  const [editData, setEditData] = useState({ plan: "", planStatus: "", planExpiresAt: "" });
+  const [editData, setEditData] = useState({ plan: "", planStatus: "", planExpiresAt: "", status: "" });
   const [updating, setUpdating] = useState(false);
 
   const fetchData = async () => {
@@ -51,7 +51,8 @@ export default function AdminDashboard() {
     setEditData({
       plan: b.plan,
       planStatus: b.planStatus,
-      planExpiresAt: b.planExpiresAt ? b.planExpiresAt.split("T")[0] : ""
+      planExpiresAt: b.planExpiresAt ? b.planExpiresAt.split("T")[0] : "",
+      status: b.status || "ACTIVE"
     });
   };
 
@@ -214,6 +215,19 @@ export default function AdminDashboard() {
               <option value="PENDING_UPGRADE">PENDING_UPGRADE</option>
               <option value="ACTIVE">ACTIVE</option>
               <option value="EXPIRED">EXPIRED</option>
+            </select>
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-xs font-bold text-slate-500 uppercase">Service Status</label>
+            <select 
+              className="w-full p-2 border rounded-xl text-sm"
+              value={editData.status}
+              onChange={(e) => setEditData({ ...editData, status: e.target.value })}
+            >
+              <option value="ACTIVE">ACTIVE (Running)</option>
+              <option value="INACTIVE">INACTIVE</option>
+              <option value="SUSPENDED">SUSPENDED (Stopped)</option>
             </select>
           </div>
 

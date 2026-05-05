@@ -82,7 +82,7 @@ export const adminController = {
         throw new AppError("Unauthorized", 403);
       }
 
-      const { businessId, plan, planStatus, planExpiresAt } = req.body;
+      const { businessId, plan, planStatus, planExpiresAt, status } = req.body;
       const business = await Business.findById(businessId);
       
       if (!business) throw new AppError("Business not found", 404);
@@ -90,6 +90,7 @@ export const adminController = {
       if (plan) business.plan = plan;
       if (planStatus) business.planStatus = planStatus;
       if (planExpiresAt) business.planExpiresAt = new Date(planExpiresAt);
+      if (status) business.status = status;
 
       await business.save();
 
