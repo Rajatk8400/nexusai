@@ -245,6 +245,7 @@ export const saleApi = {
     paymentMethod?: string;
     notes?: string;
     isInterState?: boolean;
+    includeGST?: boolean;
   }) => apiFetch<Sale>("/sales", { method: "POST", body: JSON.stringify(data) }),
 
   list: (params?: { status?: string; paymentMethod?: string; from?: string; to?: string; page?: number; limit?: number }) => {
