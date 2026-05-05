@@ -56,76 +56,81 @@ function PackageIcon({ size = 18, className = "" }: { size?: number; className?:
 
 interface SidebarProps {
   collapsed: boolean;
+  mobileOpen: boolean;
   onToggle: () => void;
+  onClose: () => void;
 }
 
-export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
+export default function Sidebar({ collapsed, mobileOpen, onToggle, onClose }: SidebarProps) {
   const navigate = useNavigate();
   return (
-    <aside
-      className={`flex flex-col h-screen bg-slate-900 border-r border-slate-800 transition-all duration-300 flex-shrink-0 ${
-        collapsed ? "w-16" : "w-60"
-      }`}
-    >
-      {/* Logo */}
-      <div className="flex items-center gap-3 px-4 py-5 border-b border-slate-800">
-        <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-blue-500 to-emerald-500 flex items-center justify-center flex-shrink-0 shadow-lg shadow-blue-900/40">
-          <SparkleIcon size={16} className="text-white" />
-        </div>
-        {!collapsed && (
-          <div>
+    <>
+      {/* Mobile Overlay */}
+      {mobileOpen && (
+        <div 
+          className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-40 lg:hidden"
+          onClick={onClose}
+        />
+      )}
+
+      <aside
+        className={`fixed inset-y-0 left-0 z-50 lg:static lg:flex flex-col h-screen bg-slate-900 border-r border-slate-800 transition-all duration-300 flex-shrink-0 ${
+          collapsed ? "lg:w-16" : "lg:w-60"
+        } ${mobileOpen ? "translate-x-0 w-64" : "-translate-x-full lg:translate-x-0"}`}
+      >
+        {/* Logo */}
+        <div className="flex items-center gap-3 px-4 py-5 border-b border-slate-800">
+          <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-blue-500 to-emerald-500 flex items-center justify-center flex-shrink-0 shadow-lg shadow-blue-900/40">
+            <SparkleIcon size={16} className="text-white" />
+          </div>
+          <div className={`${collapsed ? "lg:hidden" : "block"}`}>
             <p className="font-black text-white text-sm tracking-tight">NexusAI</p>
             <p className="text-slate-500 text-xs">for MSMEs</p>
           </div>
-        )}
-      </div>
+        </div>
 
-      {/* Navigation */}
-      <nav className="flex-1 px-2 py-4 overflow-y-auto space-y-0.5">
-        {navItems.map(({ id, label, path, Icon, badge }) => (
-          <NavLink
-            key={id}
-            to={path}
-            className={({ isActive }) =>
-              `w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 ${
-                isActive
-                  ? "bg-blue-600 text-white shadow-lg shadow-blue-900/40"
-                  : "text-slate-400 hover:text-white hover:bg-slate-800"
-              }`
-            }
-            title={collapsed ? label : undefined}
-          >
-            <Icon size={18} className="flex-shrink-0" />
-            {!collapsed && (
-              <>
-                <span className="flex-1 text-left">{label}</span>
-                {badge && <Badge variant="new">{badge}</Badge>}
-              </>
-            )}
-          </NavLink>
-        ))}
-      </nav>
+        {/* Navigation */}
+        <nav className="flex-1 px-2 py-4 overflow-y-auto space-y-0.5">
+          {navItems.map(({ id, label, path, Icon, badge }) => (
+            <NavLink
+              key={id}
+              to={path}
+              onClick={onClose}
+              className={({ isActive }) =>
+                `w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 ${
+                  isActive
+                    ? "bg-blue-600 text-white shadow-lg shadow-blue-900/40"
+                    : "text-slate-400 hover:text-white hover:bg-slate-800"
+                }`
+              }
+              title={collapsed ? label : undefined}
+            >
+              <Icon size={18} className="flex-shrink-0" />
+              <span className={`flex-1 text-left ${collapsed ? "lg:hidden" : "block"}`}>{label}</span>
+              {badge && !collapsed && <Badge variant="new">{badge}</Badge>}
+            </NavLink>
+          ))}
+        </nav>
 
-      {/* Upgrade CTA */}
-      {!collapsed && (
-        <div className="mx-3 mb-4 p-4 rounded-xl bg-gradient-to-br from-blue-600/20 to-emerald-600/20 border border-blue-500/20">
+        {/* Upgrade CTA */}
+        <div className={`mx-3 mb-4 p-4 rounded-xl bg-gradient-to-br from-blue-600/20 to-emerald-600/20 border border-blue-500/20 ${collapsed ? "lg:hidden" : "block"}`}>
           <p className="text-xs font-bold text-white mb-1">Upgrade to Enterprise</p>
           <p className="text-xs text-slate-400 mb-3">Unlock advanced AI & priority support</p>
-          <Button variant="primary" size="sm" fullWidth onClick={() => navigate("/billing/expired")}>Upgrade Now</Button>
+          <Button variant="primary" size="sm" fullWidth onClick={() => { navigate("/billing/expired"); onClose(); }}>Upgrade Now</Button>
         </div>
-      )}
 
-      {/* Collapse toggle */}
-      <button
-        onClick={onToggle}
-        className="flex items-center justify-center py-3 border-t border-slate-800 text-slate-500 hover:text-white transition-colors"
-        aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-      >
-        <ChevronLeftIcon
-          size={16}
-          className={`transition-transform duration-300 ${collapsed ? "rotate-180" : ""}`}
-        />
-      </button>
-    </aside>
+        {/* Collapse toggle */}
+        <button
+          onClick={onToggle}
+          className="hidden lg:flex items-center justify-center py-3 border-t border-slate-800 text-slate-500 hover:text-white transition-colors"
+          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+        >
+          <ChevronLeftIcon
+            size={16}
+            className={`transition-transform duration-300 ${collapsed ? "rotate-180" : ""}`}
+          />
+        </button>
+      </aside>
+    </>
   );
 }

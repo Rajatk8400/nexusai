@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { BellIcon, SearchIcon, ChevronDownIcon, LogoutIcon } from "../ui/Icons";
+import { BellIcon, SearchIcon, ChevronDownIcon, LogoutIcon, MenuIcon } from "../ui/Icons";
 import Badge from "../ui/Badge";
 import Button from "../ui/Button";
 import Modal from "../ui/Modal";
@@ -11,9 +11,10 @@ import { Alert } from "../ui";
 
 interface NavbarProps {
   title: string;
+  onMenuClick?: () => void;
 }
 
-export default function Navbar({ title }: NavbarProps) {
+export default function Navbar({ title, onMenuClick }: NavbarProps) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
@@ -40,10 +41,19 @@ export default function Navbar({ title }: NavbarProps) {
 
   return (
     <>
-      <header className="h-16 bg-white border-b border-slate-200 flex items-center px-6 gap-4 flex-shrink-0 relative z-30">
+      <header className="h-16 bg-white border-b border-slate-200 flex items-center px-4 md:px-6 gap-4 flex-shrink-0 relative z-30">
+        {/* Mobile Menu Toggle */}
+        <button
+          onClick={onMenuClick}
+          className="lg:hidden w-10 h-10 flex items-center justify-center rounded-xl text-slate-500 hover:text-slate-700 hover:bg-slate-100 transition-all"
+          aria-label="Open menu"
+        >
+          <MenuIcon />
+        </button>
+
         {/* Title */}
         <div className="flex-1">
-          <h1 className="text-lg font-black text-slate-800 tracking-tight">{title}</h1>
+          <h1 className="text-sm md:text-lg font-black text-slate-800 tracking-tight line-clamp-1">{title}</h1>
           <p className="text-xs text-slate-400">
             {new Date().toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
           </p>

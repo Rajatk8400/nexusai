@@ -61,14 +61,20 @@ function PlanReminder() {
 
 export default function AppShell() {
   const [collapsed, setCollapsed] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
   const title = PAGE_TITLES[location.pathname] ?? "Dashboard";
 
   return (
     <div className="flex h-screen overflow-hidden bg-slate-50">
-      <Sidebar collapsed={collapsed} onToggle={() => setCollapsed(!collapsed)} />
+      <Sidebar 
+        collapsed={collapsed} 
+        mobileOpen={mobileOpen}
+        onToggle={() => setCollapsed(!collapsed)} 
+        onClose={() => setMobileOpen(false)}
+      />
       <div className="flex flex-col flex-1 overflow-hidden">
-        <Navbar title={title} />
+        <Navbar title={title} onMenuClick={() => setMobileOpen(true)} />
         <PlanReminder />
         <main className="flex-1 overflow-y-auto">
           <Outlet />
