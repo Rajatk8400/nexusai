@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import Card from "../../components/ui/Card";
 import Button from "../../components/ui/Button";
@@ -26,13 +27,38 @@ const PLANS = [
 ];
 
 export default function BillingExpiredPage() {
-  const { business, logout } = useAuth();
+  const { business, logout, refreshProfile } = useAuth();
+  const navigate = useNavigate();
   const [selectedPlan, setSelectedPlan] = useState<typeof PLANS[0] | null>(null);
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<"UPI" | "PAYPAL" | null>(null);
   const [transactionId, setTransactionId] = useState("");
   const [processing, setProcessing] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [isPending, setIsPending] = useState(business?.planStatus === "PENDING_UPGRADE");
+
+  // Redirect if plan is active
+  useEffect(() => {
+    if (business?.planStatus === "ACTIVE") {
+      navigate("/dashboard");
+    }
+    setIsPending(business?.planStatus === "PENDING_UPGRADE");
+  }, [business?.planStatus, navigate]);
+
+  // Optional: Auto-refresh every 30 seconds if pending
+  useEffect(() => {
+    if (!isPending) return;
+    const interval = setInterval(() => {
+      refreshProfile();
+    }, 30000);
+    return () => clearInterval(interval);
+  }, [isPending, refreshProfile]);
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await refreshProfile();
+    setRefreshing(false);
+  };
 
   const handleSelectPlan = (plan: typeof PLANS[0]) => {
     setSelectedPlan(plan);
@@ -87,7 +113,17 @@ export default function BillingExpiredPage() {
             <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Your Tracking ID</p>
             <p className="text-lg font-black text-blue-600">{business?.shortId ?? "N/A"}</p>
           </div>
-          <Button variant="secondary" fullWidth onClick={logout}>Back to Login</Button>
+          <div className="pt-4 space-y-3">
+            <Button 
+              variant="primary" 
+              fullWidth 
+              onClick={handleRefresh}
+              disabled={refreshing}
+            >
+              {refreshing ? "Checking..." : "Check Status"}
+            </Button>
+            <Button variant="secondary" fullWidth onClick={logout}>Back to Login</Button>
+          </div>
         </div>
       </div>
     );

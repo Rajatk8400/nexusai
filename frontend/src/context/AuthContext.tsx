@@ -47,6 +47,7 @@ interface AuthContextValue extends AuthState {
     businessName: string;
   }) => Promise<void>;
   logout: () => Promise<void>;
+  refreshProfile: () => Promise<void>;
 }
 
 // ── Context ───────────────────────────────────────────────────
@@ -126,8 +127,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setState({ user: null, business: null, branch: null, isAuthenticated: false, isLoading: false });
   }
 
+  async function refreshProfile() {
+    try {
+      const data = await authApi.profile();
+      setState((s) => ({
+        ...s,
+        user: data.user,
+        business: data.business,
+        branch: data.branch,
+      }));
+    } catch (e) {
+      console.error("Failed to refresh profile", e);
+    }
+  }
+
   return (
-    <AuthContext.Provider value={{ ...state, login, register, logout }}>
+    <AuthContext.Provider value={{ ...state, login, register, logout, refreshProfile }}>
       {children}
     </AuthContext.Provider>
   );

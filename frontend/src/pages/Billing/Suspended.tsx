@@ -1,8 +1,25 @@
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import Button from "../../components/ui/Button";
 
 export default function SuspendedPage() {
-  const { logout } = useAuth();
+  const { business, logout, refreshProfile } = useAuth();
+  const navigate = useNavigate();
+  const [refreshing, setRefreshing] = useState(false);
+
+  // Redirect if business becomes active
+  useEffect(() => {
+    if (business?.status === "ACTIVE") {
+      navigate("/dashboard");
+    }
+  }, [business?.status, navigate]);
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await refreshProfile();
+    setRefreshing(false);
+  };
 
   return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
@@ -29,8 +46,16 @@ export default function SuspendedPage() {
           <Button 
             variant="primary" 
             fullWidth 
+            onClick={handleRefresh}
+            disabled={refreshing}
+            className="bg-emerald-600 hover:bg-emerald-700"
+          >
+            {refreshing ? "Checking..." : "Check Status"}
+          </Button>
+          <Button 
+            variant="secondary" 
+            fullWidth 
             onClick={() => window.location.href = "mailto:support@nexusai.com"}
-            className="bg-slate-900 hover:bg-slate-800"
           >
             Contact Support
           </Button>
