@@ -50,9 +50,9 @@ export const generateBillPDF = (sale: Sale, businessName: string, gstNumber?: st
     index + 1,
     item.productName || "Item",
     item.quantity || 1,
-    `₹${(item.unitPrice || 0).toFixed(2)}`,
+    `Rs.${(item.unitPrice || 0).toFixed(2)}`,
     `${item.taxRate || 0}%`,
-    `₹${(item.totalAmount || 0).toFixed(2)}`,
+    `Rs.${(item.totalAmount || 0).toFixed(2)}`,
   ]);
 
   autoTable(doc, {
@@ -77,10 +77,10 @@ export const generateBillPDF = (sale: Sale, businessName: string, gstNumber?: st
   const summaryX = 140;
   doc.setFont("helvetica", "normal");
   doc.text(`Subtotal:`, summaryX, finalY + 15);
-  doc.text(`₹${(sale.subtotal || 0).toFixed(2)}`, 190, finalY + 15, { align: "right" });
+  doc.text(`Rs.${(sale.subtotal || 0).toFixed(2)}`, 190, finalY + 15, { align: "right" });
   
   doc.text(`GST Amount:`, summaryX, finalY + 22);
-  doc.text(`₹${(sale.taxAmount || 0).toFixed(2)}`, 190, finalY + 22, { align: "right" });
+  doc.text(`Rs.${(sale.taxAmount || 0).toFixed(2)}`, 190, finalY + 22, { align: "right" });
 
   // Total Divider
   doc.setDrawColor(200);
@@ -89,7 +89,7 @@ export const generateBillPDF = (sale: Sale, businessName: string, gstNumber?: st
   doc.setFontSize(12);
   doc.setFont("helvetica", "bold");
   doc.text(`Grand Total:`, summaryX, finalY + 35);
-  doc.text(`₹${(sale.totalAmount || 0).toFixed(2)}`, 190, finalY + 35, { align: "right" });
+  doc.text(`Rs.${(sale.totalAmount || 0).toFixed(2)}`, 190, finalY + 35, { align: "right" });
 
   // Footer
   doc.setFontSize(8);
@@ -169,7 +169,7 @@ export const generateEwayBillPDF = (sale: Sale, businessName: string, supplierGs
   doc.text("Item Summary", leftX, currY);
   currY += 7;
   doc.setFont("helvetica", "normal");
-  doc.text(`Total Value: ₹${sale.totalAmount.toLocaleString("en-IN")}`, leftX, currY);
+  doc.text(`Total Value: Rs.${sale.totalAmount.toLocaleString("en-IN")}`, leftX, currY);
   doc.text(`HSN Codes: ${[...new Set(sale.items.map(i => (i as any).hsnCode || "N/A"))].join(", ")}`, midX, currY);
   currY += 15;
 
@@ -211,7 +211,7 @@ Thank you for shopping with us! Here are your bill details:
 *Date:* ${new Date(sale.saleDateAt).toLocaleDateString("en-IN")}
 *Items:* ${sale.items.length}
 ---------------------------
-*Total Amount: ₹${sale.totalAmount.toFixed(2)}*
+*Total Amount: Rs.${sale.totalAmount.toFixed(2)}*
 ---------------------------${paymentText}
 
 Download your detailed bill here: [Internal Link or PDF]
