@@ -26,12 +26,13 @@ const PLANS = [
 ];
 
 export default function BillingExpiredPage() {
-  const { logout } = useAuth();
+  const { business, logout } = useAuth();
   const [selectedPlan, setSelectedPlan] = useState<typeof PLANS[0] | null>(null);
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<"UPI" | "PAYPAL" | null>(null);
   const [transactionId, setTransactionId] = useState("");
   const [processing, setProcessing] = useState(false);
+  const [isPending, setIsPending] = useState(business?.planStatus === "PENDING_UPGRADE");
 
   const handleSelectPlan = (plan: typeof PLANS[0]) => {
     setSelectedPlan(plan);
@@ -42,7 +43,6 @@ export default function BillingExpiredPage() {
     if (!selectedPlan) return;
     setProcessing(true);
     try {
-      // Call the backend upgrade endpoint
       const response = await fetch(`${(import.meta as any).env["VITE_API_URL"] ?? "http://localhost:4000/api/v1"}/business/upgrade`, {
         method: "POST",
         headers: {
@@ -57,8 +57,9 @@ export default function BillingExpiredPage() {
 
       if (!response.ok) throw new Error("Upgrade failed");
 
-      alert("Payment successful! Your account has been upgraded.");
-      window.location.href = "/dashboard";
+      setIsPending(true);
+      setPaymentModalOpen(false);
+      alert("Payment request submitted! Please wait for admin approval (usually within 1-2 hours).");
     } catch (e) {
       alert("Failed to process upgrade. Please contact support.");
     } finally {
@@ -67,8 +68,30 @@ export default function BillingExpiredPage() {
   };
 
   const upiLink = selectedPlan 
-    ? `upi://pay?pa=nexusai@slc&pn=NexusAI&am=${selectedPlan.price}&cu=INR&tn=Plan Upgrade ${selectedPlan.id}`
+    ? `upi://pay?pa=nexusai@slc&pn=NexusAI&am=${selectedPlan.price}&cu=INR&tn=Plan Upgrade ${business?.shortId ?? "NexusAI"}`
     : "";
+
+  if (isPending) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
+        <div className="max-w-md w-full bg-white p-8 rounded-3xl shadow-xl text-center space-y-6">
+          <div className="w-20 h-20 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto animate-pulse">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+          </div>
+          <h1 className="text-2xl font-black text-slate-800">Awaiting Approval</h1>
+          <p className="text-slate-500">
+            We have received your payment request. Our team is verifying your Transaction ID. 
+            Your plan will be activated within 1-2 hours.
+          </p>
+          <div className="p-4 bg-slate-50 rounded-xl">
+            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Your Tracking ID</p>
+            <p className="text-lg font-black text-blue-600">{business?.shortId ?? "N/A"}</p>
+          </div>
+          <Button variant="secondary" fullWidth onClick={logout}>Back to Login</Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
@@ -79,8 +102,8 @@ export default function BillingExpiredPage() {
           </div>
           <h1 className="text-4xl font-black text-slate-800 tracking-tight">Your Free Trial has Expired</h1>
           <p className="text-slate-500 text-lg max-w-xl mx-auto">
-            We hope you enjoyed NexusAI! Your 30-day trial has ended. 
-            Choose a plan below to unlock all features and continue growing your business.
+            Your unique ID is <span className="font-bold text-slate-800">{business?.shortId ?? "..."}</span>. 
+            Choose a plan below to unlock all features.
           </p>
         </div>
 

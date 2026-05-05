@@ -55,9 +55,11 @@ export class AuthService {
     // Create business
     const slug = data.businessName.toLowerCase().replace(/[^a-z0-9]/g, "-").replace(/-+/g, "-");
     const uniqueSlug = `${slug}-${Date.now().toString(36)}`;
+    const shortId = `NX-${Math.floor(1000 + Math.random() * 9000)}`; // e.g. NX-4821
     const business = await Business.create({
       name: data.businessName,
       slug: uniqueSlug,
+      shortId: shortId,
       status: "ACTIVE",
     });
 
@@ -107,7 +109,9 @@ export class AuthService {
         id: business._id.toString(), 
         name: business.name, 
         slug: business.slug,
+        shortId: (business as any).shortId,
         plan: (business as any).plan,
+        planStatus: (business as any).planStatus,
         planExpiresAt: (business as any).planExpiresAt
       },
       branch: { id: branch._id.toString(), name: branch.name, code: branch.code },
@@ -152,7 +156,9 @@ export class AuthService {
             id: business._id.toString(), 
             name: (business as any).name, 
             slug: (business as any).slug,
+            shortId: (business as any).shortId,
             plan: (business as any).plan,
+            planStatus: (business as any).planStatus,
             planExpiresAt: (business as any).planExpiresAt
           }
         : null,
@@ -207,7 +213,9 @@ export class AuthService {
         id: (business as any)._id.toString(),
         name: (business as any).name,
         slug: (business as any).slug,
+        shortId: (business as any).shortId,
         plan: (business as any).plan,
+        planStatus: (business as any).planStatus,
         planExpiresAt: (business as any).planExpiresAt,
       } : null,
       branch: branch ? {

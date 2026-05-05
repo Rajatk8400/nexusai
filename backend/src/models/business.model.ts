@@ -19,8 +19,11 @@ export interface IBusiness extends Document<string> {
   ownerId?: string;
   upiId?: string;
   plan: "TRIAL" | "SIX_MONTHS" | "YEARLY";
+  planStatus: "TRIAL" | "PENDING_UPGRADE" | "ACTIVE" | "EXPIRED";
+  pendingPlanId?: string;
   planExpiresAt: Date;
   lastTransactionId?: string;
+  shortId?: string;
   deletedAt?: Date;
   createdAt: Date;
   updatedAt: Date;
@@ -49,6 +52,13 @@ const BusinessSchema = new Schema<IBusiness>(
       enum: ["TRIAL", "SIX_MONTHS", "YEARLY"], 
       default: "TRIAL" 
     },
+    planStatus: {
+      type: String,
+      enum: ["TRIAL", "PENDING_UPGRADE", "ACTIVE", "EXPIRED"],
+      default: "TRIAL"
+    },
+    pendingPlanId: { type: String },
+    shortId: { type: String, unique: true, sparse: true },
     planExpiresAt: { type: Date, required: true, default: () => new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) },
     lastTransactionId: { type: String, trim: true },
     deletedAt: { type: Date },

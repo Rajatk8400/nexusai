@@ -10,22 +10,13 @@ export const businessController = {
       const businessId = req.user!.businessId!;
 
       if (!transactionId) throw new Error("Transaction ID is required for upgrade");
-      
-      let durationMonths = 0;
-      if (planId === "SIX_MONTHS") durationMonths = 6;
-      else if (planId === "YEARLY") durationMonths = 12;
-      else throw new Error("Invalid plan ID");
-
-      const expiresAt = new Date();
-      expiresAt.setMonth(expiresAt.getMonth() + durationMonths);
 
       const business = await Business.findByIdAndUpdate(
         businessId,
         { 
-          plan: planId, 
-          planExpiresAt: expiresAt,
+          planStatus: "PENDING_UPGRADE",
+          pendingPlanId: planId,
           lastTransactionId: transactionId,
-          status: "ACTIVE" 
         },
         { new: true }
       );

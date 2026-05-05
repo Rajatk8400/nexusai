@@ -1,8 +1,9 @@
 import { NavLink, useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
 import {
   GridIcon, ChartIcon, UsersIcon, SparkleIcon,
   FileIcon, GearIcon, ChevronLeftIcon,
-  DownloadIcon, PlusIcon,
+  DownloadIcon, PlusIcon, ShieldIcon
 } from "../ui/Icons";
 import Badge from "../ui/Badge";
 import Button from "../ui/Button";
@@ -62,7 +63,13 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ collapsed, mobileOpen, onToggle, onClose }: SidebarProps) {
+  const { user } = useAuth();
   const navigate = useNavigate();
+
+  const filteredNavItems = user?.role === "SUPER_ADMIN" 
+    ? [...navItems, { id: "admin", label: "Admin Panel", path: "/admin", Icon: ShieldIcon }]
+    : navItems;
+
   return (
     <>
       {/* Mobile Overlay */}
@@ -91,7 +98,7 @@ export default function Sidebar({ collapsed, mobileOpen, onToggle, onClose }: Si
 
         {/* Navigation */}
         <nav className="flex-1 px-2 py-4 overflow-y-auto space-y-0.5">
-          {navItems.map(({ id, label, path, Icon, badge }) => (
+          {filteredNavItems.map(({ id, label, path, Icon, badge }) => (
             <NavLink
               key={id}
               to={path}

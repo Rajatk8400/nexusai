@@ -17,7 +17,9 @@ interface Business {
   id: string;
   name: string;
   slug: string;
+  shortId?: string;
   plan?: string;
+  planStatus?: string;
   planExpiresAt?: string;
 }
 

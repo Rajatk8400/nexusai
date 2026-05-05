@@ -12,6 +12,7 @@ import {
   campaignController,
   expenseController,
   purchaseController,
+  adminController,
 } from "../controllers";
 import { authenticate, requireBusiness } from "../middlewares/auth.middleware";
 import { checkSubscription } from "../middlewares/subscription.middleware";
@@ -84,6 +85,11 @@ router.delete("/expenses/:id", ...businessGuard, (req, res, next) => expenseCont
 // ── Purchases ──────────────────────────────────────────────────
 router.get("/purchases",  ...businessGuard, (req, res, next) => purchaseController.list(req as any, res, next));
 router.post("/purchases", ...businessGuard, (req, res, next) => purchaseController.create(req as any, res, next));
+
+// ── Admin ──────────────────────────────────────────────────────
+router.get("/admin/stats",      authenticate, (req, res, next) => adminController.getStats(req as any, res, next));
+router.get("/admin/businesses", authenticate, (req, res, next) => adminController.getBusinesses(req as any, res, next));
+router.post("/admin/approve",   authenticate, (req, res, next) => adminController.approveUpgrade(req as any, res, next));
 
 // ── Health ────────────────────────────────────────────────────
 router.get("/health", (req, res) => res.json({ status: "ok", timestamp: new Date().toISOString() }));

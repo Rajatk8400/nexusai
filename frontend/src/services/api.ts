@@ -335,6 +335,12 @@ export const purchaseApi = {
   create: (data: any) => apiFetch<any>("/purchases", { method: "POST", body: JSON.stringify(data) }),
 };
 
+export const adminApi = {
+  getStats: () => apiFetch<any>("/admin/stats"),
+  getBusinesses: () => apiFetch<any[]>("/admin/businesses"),
+  approve: (businessId: string) => apiFetch<any>("/admin/approve", { method: "POST", body: JSON.stringify({ businessId }) }),
+};
+
 export const supplierApi = {
   list: () => apiFetch<any[]>("/suppliers"), // If we add suppliers UI later
 };
