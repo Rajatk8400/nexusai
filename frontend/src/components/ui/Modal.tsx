@@ -7,13 +7,16 @@ interface ModalProps {
   title: string;
   children: React.ReactNode;
   footer?: React.ReactNode;
-  size?: "sm" | "md" | "lg";
+  size?: "sm" | "md" | "lg" | "xl" | "full";
+  showClose?: boolean;
 }
 
 const sizeMap = {
   sm: "max-w-sm",
   md: "max-w-md",
   lg: "max-w-lg",
+  xl: "max-w-4xl",
+  full: "max-w-[95vw]",
 };
 
 export default function Modal({
@@ -23,6 +26,7 @@ export default function Modal({
   children,
   footer,
   size = "md",
+  showClose = true,
 }: ModalProps) {
   // Close on ESC key
   useEffect(() => {
@@ -61,13 +65,15 @@ export default function Modal({
           <h3 id="modal-title" className="font-bold text-slate-800 text-lg">
             {title}
           </h3>
-          <button
-            onClick={onClose}
-            className="text-slate-400 hover:text-slate-600 p-1 rounded-lg hover:bg-slate-100 transition-all"
-            aria-label="Close modal"
-          >
-            <XIcon />
-          </button>
+          {showClose && (
+            <button
+              onClick={onClose}
+              className="text-slate-400 hover:text-slate-600 p-1 rounded-lg hover:bg-slate-100 transition-all"
+              aria-label="Close modal"
+            >
+              <XIcon />
+            </button>
+          )}
         </div>
 
         {/* Body */}
