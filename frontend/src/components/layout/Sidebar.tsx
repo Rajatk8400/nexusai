@@ -121,7 +121,7 @@ export default function Sidebar({ collapsed, mobileOpen, onToggle, onClose }: Si
         </nav>
 
         {/* Upgrade CTA */}
-        <div className={`mx-3 mb-4 p-4 rounded-xl bg-gradient-to-br from-blue-600/20 to-emerald-600/20 border border-blue-500/20 ${collapsed ? "lg:hidden" : "block"}`}>
+        <div className={`mx-3 mt-2 mb-6 p-4 rounded-xl bg-gradient-to-br from-blue-600/20 to-emerald-600/20 border border-blue-500/20 ${collapsed ? "lg:hidden" : "block"}`}>
           <p className="text-xs font-bold text-white mb-1">Upgrade to Enterprise</p>
           <p className="text-xs text-slate-400 mb-3">Unlock advanced AI & priority support</p>
           <Button variant="primary" size="sm" fullWidth onClick={() => { navigate("/billing/expired"); onClose(); }}>Upgrade Now</Button>
