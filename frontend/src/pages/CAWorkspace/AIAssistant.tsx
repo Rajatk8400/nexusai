@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import Card from "../../components/ui/Card";
 import Button from "../../components/ui/Button";
-import { SparkleIcon, SendIcon, XIcon, MicrophoneIcon } from "../../components/ui/Icons";
+import { SparkleIcon } from "../../components/ui/Icons";
 
 export default function AIAssistant() {
   const [isOpen, setIsOpen] = useState(false);
