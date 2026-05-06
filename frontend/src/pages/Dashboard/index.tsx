@@ -255,7 +255,7 @@ export default function Dashboard() {
               <PieChart>
                 <Pie data={channelData} cx="50%" cy="50%" innerRadius={50} outerRadius={80}
                   paddingAngle={3} dataKey="value">
-                  {channelData.map((e, i) => <Cell key={i} fill={e.color} />)}
+                  {channelData.map((e: any, i: number) => <Cell key={i} fill={e.color} />)}
                 </Pie>
                 <Tooltip
                   contentStyle={{ borderRadius: "12px", border: "none" }}
@@ -265,7 +265,7 @@ export default function Dashboard() {
             </ResponsiveContainer>
           </div>
           <div className="space-y-2 mt-2">
-            {channelData.map((ch) => (
+            {channelData.map((ch: any) => (
               <div key={ch.name} className="flex items-center justify-between">
                 <span className="flex items-center gap-2 text-xs text-slate-600">
                   <span className="w-2.5 h-2.5 rounded-sm" style={{ background: ch.color }} />
