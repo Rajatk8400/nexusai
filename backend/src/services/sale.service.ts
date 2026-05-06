@@ -33,6 +33,7 @@ export class SaleService {
       saleDateAt?: Date;
       isInterState?: boolean;
       includeGST?: boolean;
+      amountPaid?: number;
     }
   ) {
     const session = await mongoose.startSession();
@@ -112,9 +113,20 @@ export class SaleService {
       }
 
       const invoiceNumber = await nextInvoiceNumber(businessId);
+      const grandTotal = Math.round((subtotal + totalTax) * 100) / 100;
+      let amountPaid = data.amountPaid !== undefined ? data.amountPaid : grandTotal;
+      let balanceDue = grandTotal - amountPaid;
+
+      let paymentStatus: "PENDING" | "COMPLETED" | "PARTIAL" = "COMPLETED";
+      if (balanceDue > 0 && amountPaid > 0) paymentStatus = "PARTIAL";
+      if (amountPaid === 0) paymentStatus = "PENDING";
 
       // Handle Customer & Khata
       let customerId = null;
+      if (balanceDue > 0 && !data.customerPhone && !data.customerName) {
+         throw new AppError("Customer name or phone is required for Udhar (Credit) sales", 400);
+      }
+
       if (data.customerPhone || data.customerName) {
         const customer = await customerService.upsert(businessId, {
           name: data.customerName || "Walk-in Customer",
@@ -123,17 +135,30 @@ export class SaleService {
         });
         customerId = customer?._id.toString();
         
-        // If it's a credit sale, record in ledger
-        if (data.paymentMethod === "CREDIT") {
+        // Always record the full sale in the ledger
+        if (balanceDue > 0 || data.paymentMethod === "CREDIT") {
            await customerService.recordTransaction(
              businessId, 
              customerId!, 
              "SALE", 
-             Math.round((subtotal + totalTax) * 100) / 100,
+             grandTotal,
              invoiceNumber,
              `Credit Sale - Invoice #${invoiceNumber}`,
-             "CREDIT"
+             data.paymentMethod || "CREDIT"
            );
+
+           // If there is a down payment, record it immediately as a payment
+           if (amountPaid > 0) {
+             await customerService.recordTransaction(
+               businessId, 
+               customerId!, 
+               "PAYMENT", 
+               amountPaid,
+               invoiceNumber,
+               `Down Payment - Invoice #${invoiceNumber}`,
+               data.paymentMethod === "CREDIT" ? "CASH" : data.paymentMethod || "CASH"
+             );
+           }
         }
       }
 
@@ -152,10 +177,12 @@ export class SaleService {
         cgst: Math.round(cgst * 100) / 100,
         sgst: Math.round(sgst * 100) / 100,
         igst: Math.round(igst * 100) / 100,
-        totalAmount: Math.round((subtotal + totalTax) * 100) / 100,
+        totalAmount: grandTotal,
+        amountPaid: amountPaid,
+        balanceDue: balanceDue,
         profitAmount: Math.round(totalProfit * 100) / 100,
-        paymentMethod: data.paymentMethod ?? "CASH",
-        paymentStatus: data.paymentMethod === "CREDIT" ? "PENDING" : "COMPLETED",
+        paymentMethod: balanceDue > 0 && amountPaid > 0 ? "MIXED" : data.paymentMethod ?? "CASH",
+        paymentStatus,
         status: "CONFIRMED",
         notes: data.notes,
         createdById,

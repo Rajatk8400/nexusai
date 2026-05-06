@@ -91,11 +91,88 @@ export const generateBillPDF = (sale: Sale, businessName: string, gstNumber?: st
   doc.text(`Grand Total:`, summaryX, finalY + 35);
   doc.text(`Rs.${(sale.totalAmount || 0).toFixed(2)}`, 190, finalY + 35, { align: "right" });
 
+  if (sale.balanceDue && sale.balanceDue > 0) {
+    doc.setFontSize(10);
+    doc.setTextColor(50);
+    doc.text(`Amount Paid:`, summaryX, finalY + 45);
+    doc.text(`Rs.${(sale.amountPaid || 0).toFixed(2)}`, 190, finalY + 45, { align: "right" });
+    
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(220, 38, 38); // Red color for outstanding balance
+    doc.text(`Balance Due (Udhar):`, summaryX, finalY + 52);
+    doc.text(`Rs.${(sale.balanceDue || 0).toFixed(2)}`, 190, finalY + 52, { align: "right" });
+  }
+
   // Footer
   doc.setFontSize(8);
   doc.setFont("helvetica", "italic");
   doc.setTextColor(100);
-  doc.text("Computer generated invoice", 105, finalY + 50, { align: "center" });
+  doc.text("Computer generated invoice", 105, finalY + 70, { align: "center" });
+
+  return doc;
+};
+
+export const generateUdharBillPDF = (sale: Sale, businessName: string, gstNumber?: string) => {
+  const doc = new jsPDF() as any;
+
+  // Header
+  doc.setFontSize(20);
+  doc.setTextColor(40);
+  doc.text(businessName, 105, 20, { align: "center" });
+  
+  doc.setFontSize(10);
+  doc.setTextColor(100);
+
+  doc.text("PAYMENT RECEIPT & OUTSTANDING BALANCE", 105, 28, { align: "center" });
+  doc.setDrawColor(200);
+  doc.line(20, 35, 190, 35);
+
+  // Bill Details
+  doc.setFontSize(10);
+  doc.setTextColor(40);
+  doc.setFont("helvetica", "bold");
+  doc.text("Customer Details:", 20, 45);
+  doc.setFont("helvetica", "normal");
+  doc.text(sale.customerName || "Walk-in Customer", 20, 50);
+  if (sale.customerPhone) doc.text(`Phone: ${sale.customerPhone}`, 20, 55);
+
+  doc.setFont("helvetica", "bold");
+  doc.text("Transaction Details:", 140, 45);
+  doc.setFont("helvetica", "normal");
+  doc.text(`Ref Invoice #: ${sale.invoiceNumber}`, 140, 50);
+  doc.text(`Date: ${new Date(sale.saleDateAt).toLocaleDateString("en-IN")}`, 140, 55);
+
+  doc.setDrawColor(200);
+  doc.line(20, 65, 190, 65);
+
+  // Big Highlighted Numbers
+  doc.setFontSize(14);
+  doc.setFont("helvetica", "bold");
+  
+  doc.setTextColor(40);
+  doc.text("Total Invoice Value:", 20, 80);
+  doc.text(`Rs.${(sale.totalAmount || 0).toLocaleString("en-IN")}`, 80, 80);
+
+  doc.setTextColor(16, 185, 129); // Emerald
+  doc.text("Down Payment Received:", 20, 95);
+  doc.text(`Rs.${(sale.amountPaid || 0).toLocaleString("en-IN")}`, 80, 95);
+
+  doc.setTextColor(220, 38, 38); // Rose
+  doc.text("Remaining Balance (Udhar):", 20, 110);
+  doc.text(`Rs.${(sale.balanceDue || 0).toLocaleString("en-IN")}`, 80, 110);
+
+  doc.setDrawColor(200);
+  doc.line(20, 120, 190, 120);
+
+  doc.setFontSize(10);
+  doc.setTextColor(100);
+  doc.setFont("helvetica", "normal");
+  doc.text("Please clear the outstanding balance at your earliest convenience.", 105, 135, { align: "center" });
+
+  // Footer
+  doc.setFontSize(8);
+  doc.setFont("helvetica", "italic");
+  doc.text("Computer generated payment record", 105, 280, { align: "center" });
 
   return doc;
 };

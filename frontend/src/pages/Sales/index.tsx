@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { saleApi, productApi, type Sale, type Product } from "../../services/api";
 import { useAuth } from "../../context/AuthContext";
-import { generateBillPDF, generateEwayBillPDF, shareToWhatsApp } from "../../utils/billGenerator";
+import { generateBillPDF, generateEwayBillPDF, shareToWhatsApp, generateUdharBillPDF } from "../../utils/billGenerator";
 import Modal from "../../components/ui/Modal";
 import Button from "../../components/ui/Button";
 import { exportToExcel } from "../../utils/exportToExcel";
@@ -87,6 +87,7 @@ export default function SalesPage() {
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("CASH");
+  const [amountPaidInput, setAmountPaidInput] = useState("");
   const [isInterState, setIsInterState] = useState(false);
   const [includeGST, setIncludeGST] = useState(true);
   const [search, setSearch] = useState("");
@@ -209,6 +210,13 @@ export default function SalesPage() {
   // Submit sale
   async function submitSale() {
     if (cart.length === 0) { setError("Add at least one product"); return; }
+    
+    const parsedAmountPaid = amountPaidInput === "" ? totalAmount : Number(amountPaidInput);
+    if (parsedAmountPaid < totalAmount && !customerName && !customerPhone) {
+      setError("Customer name or phone is required for Udhar (Credit) sales");
+      return;
+    }
+
     setSaving(true);
     setError("");
     try {
@@ -224,12 +232,14 @@ export default function SalesPage() {
         paymentMethod,
         isInterState,
         includeGST,
+        amountPaid: parsedAmountPaid,
       });
       setSuccess("Sale created successfully!");
       setCart([]);
       setCustomerName("");
       setCustomerPhone("");
       setPaymentMethod("CASH");
+      setAmountPaidInput("");
       loadSales();
       
       // Open bill options for the new sale
@@ -518,9 +528,28 @@ export default function SalesPage() {
                 <span>₹{totalProfit.toLocaleString("en-IN", { maximumFractionDigits: 2 })}</span>
               </div>
               <div className="border-t border-slate-100 pt-2 flex justify-between font-bold text-slate-800">
-                <span>Total</span>
+                <span>Total Bill Amount</span>
                 <span>{fmtINR(totalAmount)}</span>
               </div>
+              <div className="pt-2">
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1 block">Amount Paid Today (Down Payment)</label>
+                <div className="flex items-center gap-2 border border-blue-200 bg-blue-50 rounded-lg px-3 py-2 focus-within:ring-2 focus-within:ring-blue-500">
+                  <span className="text-blue-500 font-bold">₹</span>
+                  <input
+                    type="number"
+                    placeholder={totalAmount.toString()}
+                    value={amountPaidInput}
+                    onChange={(e) => setAmountPaidInput(e.target.value)}
+                    className="w-full bg-transparent text-sm font-bold text-blue-800 outline-none placeholder:text-blue-300"
+                  />
+                </div>
+              </div>
+              {amountPaidInput !== "" && Number(amountPaidInput) < totalAmount && (
+                <div className="flex justify-between items-center text-rose-600 bg-rose-50 p-2 rounded-lg mt-2 border border-rose-100">
+                  <span className="text-xs font-bold uppercase tracking-wider">Balance Due (Udhar)</span>
+                  <span className="font-black text-lg">₹{(totalAmount - Number(amountPaidInput)).toLocaleString("en-IN", { maximumFractionDigits: 2 })}</span>
+                </div>
+              )}
               <button
                 onClick={submitSale}
                 disabled={saving || cart.length === 0}
@@ -698,12 +727,33 @@ export default function SalesPage() {
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
                   </div>
                   <div className="text-left">
-                    <p className="font-bold text-slate-800">Print Receipt</p>
-                    <p className="text-xs text-slate-500">Send to connected printer</p>
+                    <p className="font-bold text-slate-800">Print Full Receipt</p>
+                    <p className="text-xs text-slate-500">Standard tax invoice format</p>
                   </div>
                 </div>
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-300 group-hover:text-slate-500"><polyline points="9 18 15 12 9 6"/></svg>
               </button>
+
+              {selectedSale.balanceDue > 0 && (
+                <button
+                  onClick={() => {
+                    const doc = generateUdharBillPDF(selectedSale, business?.name || "NexusAI Business", (business as any)?.gstNumber);
+                    doc.save(`Udhar_Bill_${selectedSale.invoiceNumber}.pdf`);
+                  }}
+                  className="flex items-center justify-between p-4 border border-rose-100 bg-rose-50 rounded-xl hover:bg-rose-100 hover:border-rose-200 transition-all group"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-rose-100 text-rose-600 rounded-lg flex items-center justify-center group-hover:bg-rose-200">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                    </div>
+                    <div className="text-left">
+                      <p className="font-bold text-rose-800">Udhar & Partial Bill</p>
+                      <p className="text-xs text-rose-600">Shows amount paid & balance</p>
+                    </div>
+                  </div>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-rose-300 group-hover:text-rose-500"><polyline points="9 18 15 12 9 6"/></svg>
+                </button>
+              )}
             </div>
             
             <div className="pt-2">

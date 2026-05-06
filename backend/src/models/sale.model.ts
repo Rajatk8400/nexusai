@@ -32,10 +32,13 @@ export interface ISale extends Document<string> {
   sgst: number;
   igst: number;
   totalAmount: number;
+  amountPaid: number;
+  balanceDue: number;
   profitAmount: number;
-  paymentMethod: "CASH" | "CARD" | "UPI" | "BANK_TRANSFER" | "CREDIT";
+  paymentMethod: "CASH" | "CARD" | "UPI" | "BANK_TRANSFER" | "CREDIT" | "MIXED";
   paymentStatus: "PENDING" | "COMPLETED" | "PARTIAL" | "REFUNDED";
   status: "DRAFT" | "CONFIRMED" | "CANCELLED" | "REFUNDED";
+
   notes?: string;
   ewayBill?: {
     ewayBillNumber?: string;
@@ -84,10 +87,12 @@ const SaleSchema = new Schema<ISale>(
     sgst: { type: Number, default: 0 },
     igst: { type: Number, default: 0 },
     totalAmount: { type: Number, required: true },
+    amountPaid: { type: Number, default: 0 },
+    balanceDue: { type: Number, default: 0 },
     profitAmount: { type: Number, default: 0 },
     paymentMethod: {
       type: String,
-      enum: ["CASH", "CARD", "UPI", "BANK_TRANSFER", "CREDIT"],
+      enum: ["CASH", "CARD", "UPI", "BANK_TRANSFER", "CREDIT", "MIXED"],
       default: "CASH",
     },
     paymentStatus: {

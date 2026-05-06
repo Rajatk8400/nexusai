@@ -222,6 +222,8 @@ export interface Sale {
   sgst: number;
   igst: number;
   totalAmount: number;
+  amountPaid: number;
+  balanceDue: number;
   profitAmount: number;
   paymentMethod: string;
   paymentStatus: string;
@@ -244,10 +246,13 @@ export const saleApi = {
     items: { productId: string; quantity: number; unitPrice?: number; discountAmt?: number }[];
     customerName?: string;
     customerPhone?: string;
+    customerGst?: string;
     paymentMethod?: string;
     notes?: string;
+    saleDateAt?: Date;
     isInterState?: boolean;
     includeGST?: boolean;
+    amountPaid?: number;
   }) => apiFetch<Sale>("/sales", { method: "POST", body: JSON.stringify(data) }),
 
   list: (params?: { status?: string; paymentMethod?: string; from?: string; to?: string; page?: number; limit?: number }) => {
