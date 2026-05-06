@@ -292,6 +292,10 @@ export class SaleService {
     };
   }
 
+  async getPendingInvoicesCount(businessId: string) {
+    return await Sale.countDocuments({ businessId, paymentStatus: "PENDING", deletedAt: null });
+  }
+
   async updateEwayBill(businessId: string, saleId: string, ewayData: any) {
     const sale = await Sale.findOne({ _id: saleId, businessId, deletedAt: null });
     if (!sale) throw new AppError("Sale not found", 404);

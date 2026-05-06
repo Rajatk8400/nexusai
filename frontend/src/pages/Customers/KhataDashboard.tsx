@@ -9,9 +9,10 @@ interface KhataDashboardProps {
   customer: any;
   onClose: () => void;
   onRecordPayment: () => void;
+  onAddUdhar: () => void;
 }
 
-export default function KhataDashboard({ customer, onClose, onRecordPayment }: KhataDashboardProps) {
+export default function KhataDashboard({ customer, onClose, onRecordPayment, onAddUdhar }: KhataDashboardProps) {
   const [activeTab, setActiveTab] = useState<"ledger" | "analytics" | "reminders">("ledger");
   const [trustScore, setTrustScore] = useState<any>(null);
   const [loadingScore, setLoadingScore] = useState(true);
@@ -54,8 +55,8 @@ export default function KhataDashboard({ customer, onClose, onRecordPayment }: K
            </div>
         </div>
         <div className="flex items-center gap-3">
-           <Button variant="secondary" size="sm" onClick={() => {}}>Edit Profile</Button>
-           <Button variant="primary" size="sm" onClick={onRecordPayment}>Record Payment</Button>
+           <Button variant="secondary" size="sm" onClick={onAddUdhar} className="bg-rose-50 text-rose-600 border-rose-100 hover:bg-rose-100 font-black">Give Udhar</Button>
+           <Button variant="primary" size="sm" onClick={onRecordPayment} className="bg-emerald-600 hover:bg-emerald-700 shadow-emerald-200 font-black">Got Payment</Button>
         </div>
       </div>
 

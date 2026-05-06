@@ -118,6 +118,21 @@ export class PurchaseService {
     ]);
     return { items, total, page: p, limit: l, pages: Math.ceil(total / l) };
   }
+
+  async getPurchaseKPIs(businessId: string) {
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    
+    const [thisMonth] = await Purchase.aggregate([
+      { $match: { businessId, purchaseDateAt: { $gte: startOfMonth } } },
+      { $group: { _id: null, totalAmount: { $sum: "$totalAmount" }, totalTax: { $sum: "$taxAmount" } } },
+    ]);
+
+    return {
+      totalPurchases: thisMonth?.totalAmount || 0,
+      totalITC: thisMonth?.totalTax || 0,
+    };
+  }
 }
 
 export const purchaseService = new PurchaseService();

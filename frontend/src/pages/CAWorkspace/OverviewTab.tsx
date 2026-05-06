@@ -17,10 +17,14 @@ export default function OverviewTab({ data, loading }: OverviewTabProps) {
   const activities = data?.activities ?? [];
 
   const stats = [
+    { label: "Total Purchases", value: `₹${(kpis.totalPurchases || 0).toLocaleString()}`, trend: "+12%", color: "blue" },
     { label: "Total Sales", value: `₹${(kpis.monthRevenue || 0).toLocaleString()}`, trend: `${kpis.revenueGrowth || 0}%`, color: "emerald" },
-    { label: "Net Profit", value: `₹${(kpis.netProfit || 0).toLocaleString()}`, trend: "Live", color: "cyan" },
-    { label: "Expenses", value: `₹${(kpis.monthExpenses || 0).toLocaleString()}`, trend: "Monthly", color: "rose" },
-    { label: "Tax Liability", value: `₹${(kpis.taxPayable || 0).toLocaleString()}`, trend: "GSTR-1", color: "amber" },
+    { label: "GST Payable", value: `₹${(kpis.taxPayable || 0).toLocaleString()}`, trend: "-2%", color: "rose" },
+    { label: "GST Claimable", value: `₹${(kpis.totalITC || 0).toLocaleString()}`, trend: "+5%", color: "amber" },
+    { label: "Monthly Expenses", value: `₹${(kpis.monthExpenses || 0).toLocaleString()}`, trend: "+8%", color: "rose" },
+    { label: "Pending Invoices", value: `${kpis.pendingInvoices || 0}`, trend: "-10%", color: "slate" },
+    { label: "Profit Overview", value: `₹${(kpis.netProfit || 0).toLocaleString()}`, trend: "+15%", color: "cyan" },
+    { label: "AI Health Score", value: `${kpis.healthScore || 0}/100`, trend: "Stable", color: "indigo" },
   ];
 
   if (!loading && (!chartData || chartData.length === 0 || chartData.every((d: any) => d.revenue === 0))) {

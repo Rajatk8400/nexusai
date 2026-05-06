@@ -27,6 +27,7 @@ export default function CustomersPage() {
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [showDashboard, setShowDashboard] = useState(false);
   const [showQuickEntry, setShowQuickEntry] = useState(false);
+  const [quickEntryType, setQuickEntryType] = useState<"UDHAR" | "PAYMENT">("UDHAR");
 
   useEffect(() => {
     loadCustomers();
@@ -215,7 +216,7 @@ export default function CustomersPage() {
 
       {/* Floating Action Button */}
       <button 
-        onClick={() => setShowQuickEntry(true)}
+        onClick={() => { setSelectedCustomer(null); setQuickEntryType("UDHAR"); setShowQuickEntry(true); }}
         className="fixed bottom-8 right-8 w-16 h-16 bg-indigo-600 text-white rounded-2xl shadow-2xl shadow-indigo-300 flex items-center justify-center hover:scale-110 active:scale-95 transition-all z-40 group"
       >
          <PlusIcon size={28} className="group-hover:rotate-90 transition-transform duration-300" />
@@ -233,7 +234,8 @@ export default function CustomersPage() {
           <KhataDashboard 
             customer={selectedCustomer} 
             onClose={() => setShowDashboard(false)} 
-            onRecordPayment={() => { setShowDashboard(false); setShowQuickEntry(true); }}
+            onRecordPayment={() => { setShowDashboard(false); setQuickEntryType("PAYMENT"); setShowQuickEntry(true); }}
+            onAddUdhar={() => { setShowDashboard(false); setQuickEntryType("UDHAR"); setShowQuickEntry(true); }}
           />
         )}
       </Modal>
@@ -243,7 +245,8 @@ export default function CustomersPage() {
         onClose={() => setShowQuickEntry(false)} 
         onSuccess={loadCustomers} 
         customerId={selectedCustomer?.id || ""}
-        customerName={selectedCustomer?.name || "Customer"}
+        customerName={selectedCustomer?.name || ""}
+        initialType={quickEntryType}
       />
     </div>
   );

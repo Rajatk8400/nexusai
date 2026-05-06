@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Modal from "../../components/ui/Modal";
 import Button from "../../components/ui/Button";
 import { SparkleIcon } from "../../components/ui/Icons";
@@ -10,14 +10,34 @@ interface QuickEntryModalProps {
   onSuccess: () => void;
   customerId: string;
   customerName: string;
+  initialType?: "UDHAR" | "PAYMENT";
 }
 
-export default function QuickEntryModal({ open, onClose, onSuccess, customerId, customerName }: QuickEntryModalProps) {
-  const [type, setType] = useState<"UDHAR" | "PAYMENT">("UDHAR");
+export default function QuickEntryModal({ open, onClose, onSuccess, customerId, customerName, initialType = "UDHAR" }: QuickEntryModalProps) {
+  const [type, setType] = useState<"UDHAR" | "PAYMENT">(initialType);
   const [amount, setAmount] = useState("");
   const [notes, setNotes] = useState("");
   const [isListening, setIsListening] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [customers, setCustomers] = useState<any[]>([]);
+  const [selectedCustomerId, setSelectedCustomerId] = useState("");
+
+  useEffect(() => {
+    if (open && !customerId) {
+      loadCustomers();
+    }
+    setSelectedCustomerId(customerId);
+    setType(initialType);
+  }, [open, customerId, initialType]);
+
+  async function loadCustomers() {
+    try {
+      const res = await customerApi.list();
+      setCustomers(res.items || []);
+    } catch (e) {
+      console.error("Failed to load customers", e);
+    }
+  }
 
   const handleVoiceInput = () => {
     setIsListening(true);
@@ -30,10 +50,14 @@ export default function QuickEntryModal({ open, onClose, onSuccess, customerId, 
 
   const handleSubmit = async () => {
     if (!amount || isNaN(Number(amount))) return;
+    if (!selectedCustomerId) {
+      alert("Please select a customer first");
+      return;
+    }
     
     try {
       setLoading(true);
-      await customerApi.recordTransaction(customerId, {
+      await customerApi.recordTransaction(selectedCustomerId, {
         type,
         amount: Number(amount),
         notes,
@@ -52,14 +76,34 @@ export default function QuickEntryModal({ open, onClose, onSuccess, customerId, 
     }
   };
 
+  const currentCustomerName = customerId 
+    ? customerName 
+    : (customers.find(c => c.id === selectedCustomerId)?.name || "Select Customer");
+
   return (
     <Modal
       open={open}
       onClose={onClose}
-      title={`Quick Entry for ${customerName}`}
+      title={`Quick Entry: ${currentCustomerName}`}
       size="sm"
     >
       <div className="space-y-6 py-2">
+        {!customerId && (
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Select Customer</label>
+            <select 
+              value={selectedCustomerId}
+              onChange={(e) => setSelectedCustomerId(e.target.value)}
+              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-800 outline-none focus:border-indigo-500 transition-all"
+            >
+              <option value="">Choose a customer...</option>
+              {customers.map(c => (
+                <option key={c.id} value={c.id}>{c.name} ({c.phone || 'No phone'})</option>
+              ))}
+            </select>
+          </div>
+        )}
+
         <div className="flex bg-slate-100 p-1 rounded-xl">
            <button 
              onClick={() => setType("UDHAR")}
@@ -118,7 +162,7 @@ export default function QuickEntryModal({ open, onClose, onSuccess, customerId, 
            <Button 
              variant="primary" 
              fullWidth 
-             disabled={loading || !amount}
+             disabled={loading || !amount || !selectedCustomerId}
              className={type === "UDHAR" ? "bg-rose-600 hover:bg-rose-700 shadow-rose-200" : "bg-emerald-600 hover:bg-emerald-700 shadow-emerald-200"}
              onClick={handleSubmit}
            >
