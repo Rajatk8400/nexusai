@@ -94,6 +94,7 @@ router.get("/ai/business-insights",          ...businessGuard, (req, res, next) 
 router.get("/customers",                   ...businessGuard, (req, res, next) => customerController.list(req as any, res, next));
 router.get("/customers/:id",               ...businessGuard, (req, res, next) => customerController.getById(req as any, res, next));
 router.get("/customers/:id/transactions",  ...businessGuard, (req, res, next) => customerController.getTransactions(req as any, res, next));
+router.get("/customers/:id/trust-score",   ...businessGuard, (req, res, next) => customerController.getTrustScore(req as any, res, next));
 router.post("/customers/:id/transactions", ...businessGuard, (req, res, next) => customerController.recordTransaction(req as any, res, next));
 
 // ── Reports & Tax ──────────────────────────────────────────────

@@ -40,4 +40,11 @@ export const customerController = {
       sendSuccess(res, data);
     } catch (e) { next(e); }
   },
+  
+  async getTrustScore(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const data = await customerService.getTrustScore(req.user!.businessId!, req.params["id"]!);
+      sendSuccess(res, data);
+    } catch (e) { next(e); }
+  },
 };

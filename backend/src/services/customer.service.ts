@@ -96,6 +96,12 @@ export class CustomerService {
     const txs = await CustomerTransaction.find({ businessId, customerId }).sort({ createdAt: -1 }).limit(limit).lean();
     return txs as unknown as ICustomerTransaction[];
   }
+
+  async getTrustScore(businessId: string, customerId: string): Promise<any> {
+    const { CreditScore } = require("../models/credit_score.model");
+    const score = await CreditScore.findOne({ businessId, customerId }).lean();
+    return score;
+  }
 }
 
 export const customerService = new CustomerService();

@@ -2,34 +2,61 @@ import { useState } from "react";
 import Modal from "../../components/ui/Modal";
 import Button from "../../components/ui/Button";
 import { SparkleIcon } from "../../components/ui/Icons";
+import { customerApi } from "../../services/api";
 
 interface QuickEntryModalProps {
   open: boolean;
   onClose: () => void;
   onSuccess: () => void;
+  customerId: string;
+  customerName: string;
 }
 
-export default function QuickEntryModal({ open, onClose, onSuccess }: QuickEntryModalProps) {
+export default function QuickEntryModal({ open, onClose, onSuccess, customerId, customerName }: QuickEntryModalProps) {
   const [type, setType] = useState<"UDHAR" | "PAYMENT">("UDHAR");
   const [amount, setAmount] = useState("");
   const [notes, setNotes] = useState("");
   const [isListening, setIsListening] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const handleVoiceInput = () => {
     setIsListening(true);
-    // Simulate voice recognition
+    // Real implementation would use Web Speech API or similar
     setTimeout(() => {
       setIsListening(false);
-      setNotes("Added via Voice: Groceries for the month");
-      setAmount("2500");
-    }, 2000);
+      alert("Voice recognition is a premium feature. Please type for now.");
+    }, 1000);
+  };
+
+  const handleSubmit = async () => {
+    if (!amount || isNaN(Number(amount))) return;
+    
+    try {
+      setLoading(true);
+      await customerApi.recordTransaction(customerId, {
+        type,
+        amount: Number(amount),
+        notes,
+        paymentMethod: "CASH" // Defaulting for quick entry
+      });
+      onSuccess();
+      onClose();
+      // Clear form
+      setAmount("");
+      setNotes("");
+    } catch (e) {
+      console.error(e);
+      alert("Failed to record transaction");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <Modal
       open={open}
       onClose={onClose}
-      title="Quick Khata Entry"
+      title={`Quick Entry for ${customerName}`}
       size="sm"
     >
       <div className="space-y-6 py-2">
@@ -91,18 +118,21 @@ export default function QuickEntryModal({ open, onClose, onSuccess }: QuickEntry
            <Button 
              variant="primary" 
              fullWidth 
+             disabled={loading || !amount}
              className={type === "UDHAR" ? "bg-rose-600 hover:bg-rose-700 shadow-rose-200" : "bg-emerald-600 hover:bg-emerald-700 shadow-emerald-200"}
-             onClick={() => { onSuccess(); onClose(); }}
+             onClick={handleSubmit}
            >
-              {type === "UDHAR" ? "Confirm Udhar" : "Confirm Payment"}
+              {loading ? "Recording..." : type === "UDHAR" ? "Confirm Udhar" : "Confirm Payment"}
            </Button>
            
-           <div className="mt-4 flex items-center gap-2 p-3 bg-indigo-50 rounded-xl border border-indigo-100">
-              <SparkleIcon size={14} className="text-indigo-600" />
-              <p className="text-[10px] font-bold text-indigo-700 leading-tight">
-                 AI Hint: Frequent late payer. Suggest taking at least ₹1,000 upfront.
-              </p>
-           </div>
+           {type === "UDHAR" && (
+             <div className="mt-4 flex items-center gap-2 p-3 bg-indigo-50 rounded-xl border border-indigo-100">
+                <SparkleIcon size={14} className="text-indigo-600" />
+                <p className="text-[10px] font-bold text-indigo-700 leading-tight">
+                   AI Insight: Udhar increases outstanding. Automated reminder will be scheduled.
+                </p>
+             </div>
+           )}
         </div>
       </div>
     </Modal>

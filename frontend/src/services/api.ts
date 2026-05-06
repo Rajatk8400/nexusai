@@ -351,6 +351,7 @@ export const customerApi = {
   },
   getById: (id: string) => apiFetch<any>(`/customers/${id}`),
   getTransactions: (id: string) => apiFetch<any[]>(`/customers/${id}/transactions`),
+  getTrustScore: (id: string) => apiFetch<any>(`/customers/${id}/trust-score`),
   recordTransaction: (id: string, data: any) => apiFetch<any>(`/customers/${id}/transactions`, { method: "POST", body: JSON.stringify(data) }),
 };
 

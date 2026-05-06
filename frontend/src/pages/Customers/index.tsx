@@ -242,6 +242,8 @@ export default function CustomersPage() {
         open={showQuickEntry} 
         onClose={() => setShowQuickEntry(false)} 
         onSuccess={loadCustomers} 
+        customerId={selectedCustomer?.id || ""}
+        customerName={selectedCustomer?.name || "Customer"}
       />
     </div>
   );

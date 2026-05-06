@@ -3,6 +3,7 @@ import Card from "../../components/ui/Card";
 import Button from "../../components/ui/Button";
 import { SparkleIcon, PhoneIcon, MapPinIcon, ShieldCheckIcon } from "../../components/ui/Icons";
 import LedgerTimeline from "./LedgerTimeline";
+import { customerApi } from "../../services/api";
 
 interface KhataDashboardProps {
   customer: any;
@@ -12,6 +13,24 @@ interface KhataDashboardProps {
 
 export default function KhataDashboard({ customer, onClose, onRecordPayment }: KhataDashboardProps) {
   const [activeTab, setActiveTab] = useState<"ledger" | "analytics" | "reminders">("ledger");
+  const [trustScore, setTrustScore] = useState<any>(null);
+  const [loadingScore, setLoadingScore] = useState(true);
+
+  useEffect(() => {
+    loadTrustScore();
+  }, [customer.id]);
+
+  async function loadTrustScore() {
+    try {
+      setLoadingScore(true);
+      const res = await customerApi.getTrustScore(customer.id);
+      setTrustScore(res);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoadingScore(false);
+    }
+  }
 
   return (
     <div className="flex flex-col h-full bg-slate-50 animate-in fade-in slide-in-from-right-10 duration-300">
@@ -23,7 +42,7 @@ export default function KhataDashboard({ customer, onClose, onRecordPayment }: K
            </button>
            <div className="flex items-center gap-3">
               <div className="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center text-white font-black text-xl shadow-lg shadow-indigo-200">
-                {customer.name.charAt(0)}
+                 {customer.name.charAt(0)}
               </div>
               <div>
                 <h2 className="text-xl font-black text-slate-800 leading-tight">{customer.name}</h2>
@@ -51,7 +70,8 @@ export default function KhataDashboard({ customer, onClose, onRecordPayment }: K
               </p>
               <div className="mt-3 flex items-center gap-2">
                  <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider ${
-                   customer.riskStatus === "HIGH_RISK" ? "bg-red-100 text-red-600" : "bg-emerald-100 text-emerald-600"
+                   customer.riskStatus === "HIGH_RISK" ? "bg-red-100 text-red-600" : 
+                   customer.riskStatus === "OVERDUE" ? "bg-orange-100 text-orange-600" : "bg-emerald-100 text-emerald-600"
                  }`}>
                    {customer.riskStatus}
                  </span>
@@ -66,13 +86,23 @@ export default function KhataDashboard({ customer, onClose, onRecordPayment }: K
               </div>
            </Card>
 
-           <Card className="p-5 border-none shadow-sm bg-gradient-to-br from-indigo-600 to-violet-700 text-white relative overflow-hidden">
+           <Card className={`p-5 border-none shadow-sm relative overflow-hidden transition-all duration-500 ${
+             loadingScore ? "bg-slate-800" : 
+             (trustScore?.score || 0) > 750 ? "bg-gradient-to-br from-emerald-600 to-teal-700" :
+             (trustScore?.score || 0) > 500 ? "bg-gradient-to-br from-indigo-600 to-violet-700" :
+             "bg-gradient-to-br from-rose-600 to-red-700"
+           } text-white`}>
               <div className="relative z-10">
                 <p className="text-[10px] font-black text-white/60 uppercase tracking-widest mb-1">AI Trust Score</p>
-                <p className="text-2xl font-black">740 <span className="text-xs font-bold text-white/60">/ 900</span></p>
+                <p className="text-2xl font-black">
+                  {loadingScore ? "..." : trustScore?.score || "N/A"} 
+                  {!loadingScore && trustScore && <span className="text-xs font-bold text-white/60"> / 900</span>}
+                </p>
                 <div className="mt-3 flex items-center gap-2">
-                   <ShieldCheckIcon size={14} className="text-emerald-400" />
-                   <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-400">Low Risk Payer</span>
+                   <ShieldCheckIcon size={14} className={trustScore?.riskLevel === "LOW" ? "text-emerald-400" : "text-white/60"} />
+                   <span className="text-[10px] font-bold uppercase tracking-widest">
+                     {loadingScore ? "Calculating..." : trustScore?.riskLevel ? `${trustScore.riskLevel} RISK` : "No History"}
+                   </span>
                 </div>
               </div>
               <SparkleIcon size={64} className="absolute -right-4 -bottom-4 text-white/10 rotate-12" />
@@ -103,10 +133,6 @@ export default function KhataDashboard({ customer, onClose, onRecordPayment }: K
                       </button>
                     ))}
                  </div>
-                 <div className="flex gap-2">
-                    <Button variant="secondary" size="sm" className="h-8">Filter</Button>
-                    <Button variant="secondary" size="sm" className="h-8">Search</Button>
-                 </div>
               </div>
               
               <div className="flex-1 p-6">
@@ -121,12 +147,12 @@ export default function KhataDashboard({ customer, onClose, onRecordPayment }: K
                    <div className="space-y-4">
                       <div className="p-4 bg-indigo-50 border border-indigo-100 rounded-xl">
                          <h4 className="text-xs font-black text-indigo-900 uppercase tracking-widest mb-1">Friendly Reminder Template</h4>
-                         <p className="text-sm text-indigo-700 leading-relaxed mb-4">"Hi {customer.name}, just a gentle reminder regarding your pending balance of ₹{customer.balance.toLocaleString()}..."</p>
+                         <p className="text-sm text-indigo-700 leading-relaxed mb-4">"Hi {customer.name}, just a gentle reminder from NexusAI regarding your pending balance of ₹{customer.balance.toLocaleString()}. Hope you have a great day!"</p>
                          <Button variant="primary" size="sm">Send on WhatsApp</Button>
                       </div>
                       <div className="p-4 bg-rose-50 border border-rose-100 rounded-xl">
                          <h4 className="text-xs font-black text-rose-900 uppercase tracking-widest mb-1">Urgent Overdue Template</h4>
-                         <p className="text-sm text-rose-700 leading-relaxed mb-4">"Hi {customer.name}, your payment of ₹{customer.balance.toLocaleString()} is now overdue..."</p>
+                         <p className="text-sm text-rose-700 leading-relaxed mb-4">"IMPORTANT: Hi {customer.name}, your payment of ₹{customer.balance.toLocaleString()} is now overdue. Please settle this at your earliest convenience."</p>
                          <Button variant="secondary" size="sm" className="bg-white border-rose-200 text-rose-700">Send on SMS</Button>
                       </div>
                    </div>
@@ -142,15 +168,10 @@ export default function KhataDashboard({ customer, onClose, onRecordPayment }: K
                    AI Payment Insights
                  </h3>
                  <div className="space-y-4">
-                    {customer.balance === 0 ? (
-                      <p className="text-xs text-white/40 italic py-4">Waiting for first Udhar entry to generate payment behavior insights...</p>
+                    {!trustScore || trustScore.insights?.length === 0 ? (
+                      <p className="text-xs text-white/40 italic py-4">Waiting for more transaction history to generate payment behavior insights...</p>
                     ) : (
-                      [
-                        "Usually pays within 12 days of udhar entry.",
-                        "Best collection time: Wednesday evenings.",
-                        "Credit limit can be safely increased by 20%.",
-                        "Payment behavior improved by 15% this quarter."
-                      ].map((insight, i) => (
+                      trustScore.insights.map((insight: string, i: number) => (
                         <div key={i} className="flex gap-3 bg-white/5 p-3 rounded-xl border border-white/5">
                           <span className="text-indigo-400 mt-1 text-xs">•</span>
                           <p className="text-xs font-medium leading-relaxed opacity-80">{insight}</p>
@@ -179,7 +200,9 @@ export default function KhataDashboard({ customer, onClose, onRecordPayment }: K
                                 <circle className="text-slate-100" strokeWidth="3" stroke="currentColor" fill="none" r="16" cx="18" cy="18" />
                                 <circle className={`text-${customer.balance === 0 ? "slate-200" : "emerald-500"}`} strokeWidth="3" strokeDasharray={`${customer.balance === 0 ? 0 : 92}, 100`} strokeLinecap="round" stroke="currentColor" fill="none" r="16" cx="18" cy="18" />
                              </svg>
-                             <span className="absolute text-xl font-black text-slate-800">{customer.balance === 0 ? "N/A" : "92%"}</span>
+                             <span className="absolute text-xl font-black text-slate-800">
+                               {customer.balance === 0 ? "N/A" : trustScore?.riskLevel === "LOW" ? "92%" : trustScore?.riskLevel === "MEDIUM" ? "75%" : "40%"}
+                             </span>
                           </div>
                        </div>
                     </div>
