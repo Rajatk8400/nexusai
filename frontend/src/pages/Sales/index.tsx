@@ -400,56 +400,87 @@ export default function SalesPage() {
               ) : (
                 <div className="divide-y divide-slate-100">
                   {cart.map((item) => (
-                    <div key={item.productId} className="p-4">
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-slate-800 truncate">{item.productName}</p>
-                          <p className="text-xs text-slate-500">{item.sku} · GST {item.taxRate}%</p>
+                    <div key={item.productId} className="p-4 space-y-3">
+                      {/* Row 1: Name + Remove */}
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <p className="text-sm font-bold text-slate-800">{item.productName}</p>
+                          <p className="text-xs text-slate-400 mt-0.5">{item.sku} · GST {item.taxRate}%</p>
                         </div>
                         <button
                           onClick={() => removeFromCart(item.productId)}
-                          className="text-slate-400 hover:text-red-500 text-sm"
+                          className="text-slate-300 hover:text-red-500 transition-colors text-lg leading-none"
                         >✕</button>
                       </div>
-                      <div className="mt-2 flex items-center gap-3">
+
+                      {/* Row 2: Qty + Sale Price (prominent) + Line Total */}
+                      <div className="flex items-end gap-3">
                         {/* Quantity */}
-                        <div className="flex items-center border border-slate-200 rounded-lg overflow-hidden">
-                          <button
-                            onClick={() => updateQty(item.productId, item.quantity - 1)}
-                            className="px-2 py-1 text-slate-600 hover:bg-slate-100 text-sm"
-                          >−</button>
-                          <input
-                            type="number"
-                            value={item.quantity}
-                            onChange={(e) => updateQty(item.productId, Number(e.target.value))}
-                            className="w-12 text-center text-sm border-x border-slate-200 py-1 focus:outline-none"
-                            min={1}
-                          />
-                          <button
-                            onClick={() => updateQty(item.productId, item.quantity + 1)}
-                            className="px-2 py-1 text-slate-600 hover:bg-slate-100 text-sm"
-                          >+</button>
+                        <div className="flex flex-col gap-1">
+                          <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Qty</label>
+                          <div className="flex items-center border border-slate-200 rounded-lg overflow-hidden">
+                            <button
+                              onClick={() => updateQty(item.productId, item.quantity - 1)}
+                              className="px-2.5 py-1.5 text-slate-600 hover:bg-slate-100 text-sm font-bold"
+                            >−</button>
+                            <input
+                              type="number"
+                              value={item.quantity}
+                              onChange={(e) => updateQty(item.productId, Number(e.target.value))}
+                              className="w-12 text-center text-sm font-bold border-x border-slate-200 py-1.5 focus:outline-none"
+                              min={1}
+                            />
+                            <button
+                              onClick={() => updateQty(item.productId, item.quantity + 1)}
+                              className="px-2.5 py-1.5 text-slate-600 hover:bg-slate-100 text-sm font-bold"
+                            >+</button>
+                          </div>
                         </div>
-                        {/* Price */}
-                        <div className="flex items-center gap-1">
-                          <span className="text-xs text-slate-500">₹</span>
-                          <input
-                            type="number"
-                            value={item.unitPrice}
-                            onChange={(e) => updatePrice(item.productId, Number(e.target.value))}
-                            className="w-24 border border-slate-200 rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
-                          />
+
+                        {/* Sale Price — big and editable */}
+                        <div className="flex-1 flex flex-col gap-1">
+                          <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                            Sale Price (₹)
+                            <span className="ml-2 text-slate-300 font-normal normal-case">MRP: ₹{item.costPrice > 0 ? item.unitPrice : "—"}</span>
+                          </label>
+                          <div className={`flex items-center gap-1.5 border rounded-lg px-3 py-1.5 focus-within:ring-2 transition-all ${
+                            item.unitPrice < item.costPrice
+                              ? "border-red-300 bg-red-50 focus-within:ring-red-400/30"
+                              : "border-blue-200 bg-blue-50 focus-within:ring-blue-400/30"
+                          }`}>
+                            <span className="text-blue-400 font-black text-sm">₹</span>
+                            <input
+                              type="number"
+                              value={item.unitPrice}
+                              onChange={(e) => updatePrice(item.productId, Number(e.target.value))}
+                              className="w-full bg-transparent text-base font-black text-slate-800 focus:outline-none"
+                              min={0}
+                              step={0.01}
+                            />
+                          </div>
+                          {item.unitPrice < item.costPrice && (
+                            <p className="text-[10px] text-red-500 font-bold">⚠ Below cost price — selling at a loss</p>
+                          )}
                         </div>
-                        {/* Line total */}
-                        <div className="ml-auto text-right">
-                          <p className="text-sm font-semibold text-slate-800">
+
+                        {/* Line Total */}
+                        <div className="text-right flex flex-col gap-1 min-w-[80px]">
+                          <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Total</label>
+                          <p className="text-base font-black text-slate-800">
                             ₹{item.totalAmount.toLocaleString("en-IN", { maximumFractionDigits: 2 })}
-                          </p>
-                          <p className="text-xs text-slate-500">
-                            Tax: ₹{item.taxAmount.toFixed(2)}
                           </p>
                         </div>
                       </div>
+
+                      {/* Row 3: Live GST Breakdown */}
+                      {includeGST && item.taxRate > 0 && (
+                        <div className="flex items-center gap-4 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2 text-xs">
+                          <span className="text-amber-700 font-bold">GST ({item.taxRate}%)</span>
+                          <span className="text-amber-600">Base: ₹{(item.unitPrice * item.quantity - item.discountAmt).toFixed(2)}</span>
+                          <span className="text-amber-600">+Tax: ₹{item.taxAmount.toFixed(2)}</span>
+                          <span className="ml-auto text-amber-800 font-black">Line Total: ₹{item.totalAmount.toFixed(2)}</span>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
