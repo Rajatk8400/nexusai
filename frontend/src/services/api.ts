@@ -312,6 +312,12 @@ export const aiApi = {
 
   getInventoryInsights: () =>
     apiFetch<any[]>("/ai/inventory-insights"),
+
+  getStaffProductivity: () =>
+    apiFetch<any[]>("/ai/staff-productivity"),
+
+  getBusinessInsights: () =>
+    apiFetch<any>("/ai/business-insights"),
 };
 
 export const customerApi = {

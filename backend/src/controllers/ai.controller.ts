@@ -27,4 +27,18 @@ export const aiController = {
       sendSuccess(res, insights);
     } catch (e) { next(e); }
   },
+
+  async getStaffProductivity(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const stats = await aiService.getStaffProductivity(req.user!.businessId!);
+      sendSuccess(res, stats);
+    } catch (e) { next(e); }
+  },
+
+  async getBusinessInsights(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const insights = await aiService.getBusinessInsights(req.user!.businessId!);
+      sendSuccess(res, insights);
+    } catch (e) { next(e); }
+  },
 };

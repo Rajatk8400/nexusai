@@ -1,4 +1,4 @@
-import { Sale, Product, Inventory, ForecastResult } from "../models";
+import { Sale, Product, Inventory, ForecastResult, User } from "../models";
 import { AppError } from "../utils/AppError";
 import { createLogger } from "../config/logger";
 
@@ -193,6 +193,8 @@ export class AIService {
       predictions.push({
         date: targetDate.toISOString().split('T')[0],
         revenue,
+        bestCase: Math.round(revenue * 1.15 * 100) / 100,
+        worstCase: Math.round(revenue * 0.85 * 100) / 100,
         confidence: confidenceScore
       });
     }
@@ -267,6 +269,97 @@ export class AIService {
       if (a.status === "WARNING" && b.status === "HEALTHY") return -1;
       return 0;
     });
+  }
+
+  async getStaffProductivity(businessId: string) {
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    const sales = await Sale.find({
+      businessId,
+      status: "CONFIRMED",
+      saleDateAt: { $gte: thirtyDaysAgo }
+    }).lean();
+
+    const staffStats: Record<string, any> = {};
+
+    for (const sale of sales) {
+      const staffId = sale.createdById || "system";
+      if (!staffStats[staffId]) {
+        staffStats[staffId] = {
+          staffId,
+          totalRevenue: 0,
+          orderCount: 0,
+          avgOrderValue: 0,
+          profitGenerated: 0
+        };
+      }
+      staffStats[staffId].totalRevenue += sale.totalAmount;
+      staffStats[staffId].orderCount += 1;
+      staffStats[staffId].profitGenerated += (sale as any).profitAmount || 0;
+    }
+
+    const staffIds = Object.keys(staffStats);
+    const users = await User.find({ _id: { $in: staffIds } }).select("firstName lastName").lean();
+    const userMap = new Map(users.map(u => [u._id.toString(), `${u.firstName} ${u.lastName}`]));
+
+    const results = Object.values(staffStats).map(s => ({
+      ...s,
+      staffName: userMap.get(s.staffId) || "Unknown Staff",
+      avgOrderValue: s.orderCount > 0 ? Math.round((s.totalRevenue / s.orderCount) * 100) / 100 : 0,
+      efficiencyScore: s.orderCount > 0 ? Math.min(100, Math.round((s.totalRevenue / s.orderCount / 100) * 10 + s.orderCount)) : 0
+    }));
+
+    return results.sort((a, b) => b.totalRevenue - a.totalRevenue);
+  }
+
+  async getBusinessInsights(businessId: string) {
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    const sales = await Sale.find({
+      businessId,
+      status: "CONFIRMED",
+      saleDateAt: { $gte: thirtyDaysAgo }
+    }).lean();
+
+    if (sales.length === 0) return { insights: ["No recent sales data to analyze."], metrics: {} };
+
+    // Day of week analysis
+    const dayTotals = [0, 0, 0, 0, 0, 0, 0];
+    const dayCounts = [0, 0, 0, 0, 0, 0, 0];
+    const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+
+    sales.forEach(s => {
+      const d = new Date(s.saleDateAt).getDay();
+      dayTotals[d] += s.totalAmount;
+      dayCounts[d]++;
+    });
+
+    const dayAvgs = dayTotals.map((t, i) => ({ day: days[i], avg: dayCounts[i] > 0 ? t / dayCounts[i] : 0 }));
+    const bestDay = [...dayAvgs].sort((a, b) => b.avg - a.avg)[0];
+
+    const insights = [];
+    insights.push(`Your busiest day on average is ${bestDay.day}.`);
+    
+    const totalRev = sales.reduce((sum, s) => sum + s.totalAmount, 0);
+    const avgTicket = totalRev / sales.length;
+    insights.push(`Average transaction value is ₹${avgTicket.toFixed(2)}.`);
+
+    const highValueSales = sales.filter(s => s.totalAmount > avgTicket * 2).length;
+    if (highValueSales > 0) {
+      insights.push(`You had ${highValueSales} high-value transactions (> 2x average) this month.`);
+    }
+
+    return {
+      insights,
+      metrics: {
+        totalRevenue: totalRev,
+        transactionCount: sales.length,
+        avgTicket,
+        bestDay: bestDay.day
+      }
+    };
   }
 }
 

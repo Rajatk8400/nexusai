@@ -70,6 +70,8 @@ router.get("/inventory/movements", ...businessGuard, (req, res, next) => invento
 router.get("/ai/forecast/demand/:productId", ...businessGuard, (req, res, next) => aiController.getDemandForecast(req as any, res, next));
 router.get("/ai/forecast/revenue",           ...businessGuard, (req, res, next) => aiController.getRevenueForecast(req as any, res, next));
 router.get("/ai/inventory-insights",         ...businessGuard, (req, res, next) => aiController.getInventoryInsights(req as any, res, next));
+router.get("/ai/staff-productivity",         ...businessGuard, (req, res, next) => aiController.getStaffProductivity(req as any, res, next));
+router.get("/ai/business-insights",          ...businessGuard, (req, res, next) => aiController.getBusinessInsights(req as any, res, next));
 
 // ── Customers & Khata ──────────────────────────────────────────
 router.get("/customers",                   ...businessGuard, (req, res, next) => customerController.list(req as any, res, next));

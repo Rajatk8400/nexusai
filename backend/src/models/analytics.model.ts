@@ -4,7 +4,7 @@ export interface IForecastResult extends Document<string> {
   _id: string;
   businessId: string;
   productId?: string;
-  type: "DEMAND" | "REVENUE" | "INVENTORY";
+  type: "DEMAND" | "REVENUE" | "INVENTORY" | "STAFF" | "INSIGHTS";
   status: "PENDING" | "PROCESSING" | "COMPLETED" | "FAILED";
   modelVersion?: string;
   forecastPeriod: number;
@@ -28,7 +28,7 @@ const ForecastResultSchema = new Schema<IForecastResult>(
   {
     businessId: { type: String, required: true, index: true },
     productId: { type: String, index: true },
-    type: { type: String, enum: ["DEMAND", "REVENUE", "INVENTORY"], default: "DEMAND" },
+    type: { type: String, enum: ["DEMAND", "REVENUE", "INVENTORY", "STAFF", "INSIGHTS"], default: "DEMAND" },
     status: { type: String, enum: ["PENDING", "PROCESSING", "COMPLETED", "FAILED"], default: "PENDING" },
     modelVersion: { type: String },
     forecastPeriod: { type: Number, required: true },
