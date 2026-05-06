@@ -18,6 +18,7 @@ import Purchases from "./pages/Purchases/index";
 import DocumentVault from "./pages/DocumentVault/index";
 import BillingExpiredPage from "./pages/Billing/Expired";
 import SuspendedPage from "./pages/Billing/Suspended";
+import CAWorkspace from "./pages/CAWorkspace/index";
 import AdminDashboard from "./pages/Admin";
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'react-hot-toast';
@@ -43,6 +44,7 @@ export default function App() {
         >
           <Route index element={<Navigate to="/dashboard" replace />} />
           <Route path="dashboard" element={<Dashboard />} />
+          <Route path="ca-workspace" element={<CAWorkspace />} />
           <Route path="products" element={<Products />} />
           <Route path="purchases" element={<Purchases />} />
           <Route path="sales" element={<Sales />} />

@@ -20,19 +20,37 @@ function BoxIcon({ size = 18, className = "" }: { size?: number; className?: str
   );
 }
 
+function CalculatorIcon({ size = 18, className = "" }: { size?: number; className?: string }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <rect width="16" height="20" x="4" y="2" rx="2" />
+      <line x1="8" x2="16" y1="6" y2="6" />
+      <line x1="16" x2="16" y1="14" y2="18" />
+      <path d="M16 10h.01" />
+      <path d="M12 10h.01" />
+      <path d="M8 10h.01" />
+      <path d="M12 14h.01" />
+      <path d="M8 14h.01" />
+      <path d="M12 18h.01" />
+      <path d="M8 18h.01" />
+    </svg>
+  );
+}
+
 const navItems = [
-  { id: "dashboard",  label: "Dashboard",  path: "/dashboard",  Icon: GridIcon },
-  { id: "products",   label: "Products",   path: "/products",   Icon: BoxIcon },
-  { id: "purchases",  label: "Stock In",    path: "/purchases",  Icon: PackageIcon },
-  { id: "sales",      label: "Sales",      path: "/sales",      Icon: PlusIcon },
-  { id: "inventory",  label: "Inventory",  path: "/inventory",  Icon: DownloadIcon },
-  { id: "analytics",  label: "Analytics",  path: "/analytics",  Icon: ChartIcon },
-  { id: "customers",  label: "Customers",  path: "/customers",  Icon: UsersIcon },
-  { id: "expenses",   label: "Expenses",   path: "/expenses",   Icon: ReceiptIcon },
-  { id: "documents",  label: "Doc Engine",  path: "/documents",  Icon: FileIcon, badge: "AI" },
-  { id: "ai-insights",label: "AI Insights",path: "/ai-insights",Icon: SparkleIcon, badge: "New" },
-  { id: "reports",    label: "Reports",    path: "/reports",    Icon: FileIcon },
-  { id: "settings",   label: "Settings",   path: "/settings",   Icon: GearIcon },
+  { id: "dashboard",    label: "Dashboard",       path: "/dashboard",    Icon: GridIcon },
+  { id: "ca-workspace", label: "AI CA Workspace", path: "/ca-workspace", Icon: CalculatorIcon, badge: "Pro" },
+  { id: "products",     label: "Products",        path: "/products",     Icon: BoxIcon },
+  { id: "purchases",    label: "Stock In",         path: "/purchases",    Icon: PackageIcon },
+  { id: "sales",        label: "Sales",           path: "/sales",        Icon: PlusIcon },
+  { id: "inventory",    label: "Inventory",       path: "/inventory",    Icon: DownloadIcon },
+  { id: "analytics",    label: "Analytics",       path: "/analytics",    Icon: ChartIcon },
+  { id: "customers",    label: "Customers",       path: "/customers",    Icon: UsersIcon },
+  { id: "expenses",     label: "Expenses",        path: "/expenses",     Icon: ReceiptIcon },
+  { id: "documents",    label: "Doc Engine",       path: "/documents",    Icon: FileIcon, badge: "AI" },
+  { id: "ai-insights",  label: "AI Insights",     path: "/ai-insights",  Icon: SparkleIcon, badge: "New" },
+  { id: "reports",      label: "Reports",         path: "/reports",      Icon: FileIcon },
+  { id: "settings",     label: "Settings",        path: "/settings",     Icon: GearIcon },
 ];
 
 function ReceiptIcon({ size = 18, className = "" }: { size?: number; className?: string }) {
