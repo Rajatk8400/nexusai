@@ -138,9 +138,9 @@ export default function AIInsightsPage() {
                       <p className="text-xs text-slate-400 mb-1">Business Health Score</p>
                       <div className="flex items-center gap-3">
                         <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
-                          <div className="h-full bg-emerald-500 rounded-full" style={{ width: '85%' }} />
+                          <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${businessInsights?.healthScore || 0}%` }} />
                         </div>
-                        <span className="text-sm font-black text-slate-800">85%</span>
+                        <span className="text-sm font-black text-slate-800">{businessInsights?.healthScore || 0}%</span>
                       </div>
                     </div>
                     <div className="pt-4 border-t border-slate-50 space-y-3">

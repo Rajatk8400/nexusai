@@ -10,3 +10,4 @@ export * from "./expense.model";
 export * from "./purchase.model";
 export * from "./analytics.model";
 export * from "./document.model";
+export * from "./credit_score.model";

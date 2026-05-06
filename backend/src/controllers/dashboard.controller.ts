@@ -29,10 +29,11 @@ export const dashboardController = {
         netProfit, 
         ...purchaseKpis,
         pendingInvoices,
-        healthScore: 88 // Real logic for health score can be added later
+        healthScore: 0 // Real logic for health score will be implemented in next version
       };
+      const paymentMix = await saleService.getPaymentMix(req.user!.businessId!);
 
-      sendSuccess(res, { kpis: extendedKpis, revenueChart, lowStock, stockValue });
+      sendSuccess(res, { kpis: extendedKpis, revenueChart, lowStock, stockValue, paymentMix });
     } catch (e) { next(e); }
   },
 };

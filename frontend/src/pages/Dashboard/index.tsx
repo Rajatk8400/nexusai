@@ -97,12 +97,7 @@ export default function Dashboard() {
     toast.error(error, { id: 'dashboard-error' });
   }
 
-  const channelData = [
-    { name: "Cash", value: 42, color: "#3b82f6" },
-    { name: "UPI", value: 35, color: "#10b981" },
-    { name: "Card", value: 15, color: "#8b5cf6" },
-    { name: "Credit", value: 8, color: "#f59e0b" },
-  ];
+  const channelData = overview?.paymentMix || [];
 
   if (loading) return (
     <div className="p-6 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">

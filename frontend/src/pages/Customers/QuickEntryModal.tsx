@@ -88,7 +88,7 @@ export default function QuickEntryModal({ open, onClose, onSuccess, customerId, 
       size="sm"
     >
       <div className="space-y-6 py-2">
-        {!customerId && (
+        {!customerId ? (
           <div className="space-y-1.5">
             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Select Customer</label>
             <select 
@@ -101,6 +101,16 @@ export default function QuickEntryModal({ open, onClose, onSuccess, customerId, 
                 <option key={c.id} value={c.id}>{c.name} ({c.phone || 'No phone'})</option>
               ))}
             </select>
+          </div>
+        ) : (
+          <div className="bg-indigo-50 p-4 rounded-xl border border-indigo-100 flex items-center justify-between">
+            <div>
+               <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-0.5">Recording entry for</p>
+               <p className="text-lg font-black text-indigo-900 leading-tight">{customerName}</p>
+            </div>
+            <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-500 font-black">
+               {customerName.charAt(0).toUpperCase()}
+            </div>
           </div>
         )}
 

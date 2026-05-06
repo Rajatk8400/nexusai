@@ -312,6 +312,28 @@ export class SaleService {
     await sale.save();
     return sale;
   }
+  async getPaymentMix(businessId: string) {
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    const agg = await Sale.aggregate([
+      { $match: { businessId, deletedAt: null, saleDateAt: { $gte: thirtyDaysAgo } } },
+      { $group: { _id: "$paymentMethod", count: { $sum: 1 } } }
+    ]);
+
+    const total = agg.reduce((acc, curr) => acc + curr.count, 0);
+    if (total === 0) return [];
+
+    const colors: Record<string, string> = {
+      CASH: "#3b82f6", UPI: "#10b981", CARD: "#8b5cf6", CREDIT: "#f59e0b"
+    };
+
+    return agg.map(item => ({
+      name: item._id || "Unknown",
+      value: Math.round((item.count / total) * 100),
+      color: colors[item._id] || "#94a3b8"
+    }));
+  }
 }
 
 export const saleService = new SaleService();

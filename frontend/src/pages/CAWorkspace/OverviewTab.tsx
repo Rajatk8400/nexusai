@@ -17,14 +17,14 @@ export default function OverviewTab({ data, loading }: OverviewTabProps) {
   const activities = data?.activities ?? [];
 
   const stats = [
-    { label: "Total Purchases", value: `₹${(kpis.totalPurchases || 0).toLocaleString()}`, trend: "+12%", color: "blue" },
+    { label: "Total Purchases", value: `₹${(kpis.totalPurchases || 0).toLocaleString()}`, trend: "Monthly", color: "blue" },
     { label: "Total Sales", value: `₹${(kpis.monthRevenue || 0).toLocaleString()}`, trend: `${kpis.revenueGrowth || 0}%`, color: "emerald" },
-    { label: "GST Payable", value: `₹${(kpis.taxPayable || 0).toLocaleString()}`, trend: "-2%", color: "rose" },
-    { label: "GST Claimable", value: `₹${(kpis.totalITC || 0).toLocaleString()}`, trend: "+5%", color: "amber" },
-    { label: "Monthly Expenses", value: `₹${(kpis.monthExpenses || 0).toLocaleString()}`, trend: "+8%", color: "rose" },
-    { label: "Pending Invoices", value: `${kpis.pendingInvoices || 0}`, trend: "-10%", color: "slate" },
-    { label: "Profit Overview", value: `₹${(kpis.netProfit || 0).toLocaleString()}`, trend: "+15%", color: "cyan" },
-    { label: "AI Health Score", value: `${kpis.healthScore || 0}/100`, trend: "Stable", color: "indigo" },
+    { label: "GST Payable", value: `₹${(kpis.taxPayable || 0).toLocaleString()}`, trend: "Tax", color: "rose" },
+    { label: "GST Claimable", value: `₹${(kpis.totalITC || 0).toLocaleString()}`, trend: "ITC", color: "amber" },
+    { label: "Monthly Expenses", value: `₹${(kpis.monthExpenses || 0).toLocaleString()}`, trend: "Expense", color: "rose" },
+    { label: "Pending Invoices", value: `${kpis.pendingInvoices || 0}`, trend: "Pending", color: "slate" },
+    { label: "Profit Overview", value: `₹${(kpis.netProfit || 0).toLocaleString()}`, trend: "Net", color: "cyan" },
+    { label: "AI Health Score", value: `${kpis.healthScore || 0}/100`, trend: "Health", color: "indigo" },
   ];
 
   if (!loading && (!chartData || chartData.length === 0 || chartData.every((d: any) => d.revenue === 0))) {

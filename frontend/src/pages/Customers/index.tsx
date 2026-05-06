@@ -4,6 +4,7 @@ import Card from "../../components/ui/Card";
 import Button from "../../components/ui/Button";
 import Modal from "../../components/ui/Modal";
 import { PlusIcon, SparkleIcon, DownloadIcon } from "../../components/ui/Icons";
+import EmptyState from "../../components/ui/EmptyState";
 import KhataDashboard from "./KhataDashboard";
 import QuickEntryModal from "./QuickEntryModal";
 
@@ -63,6 +64,8 @@ export default function CustomersPage() {
           open={showQuickEntry} 
           onClose={() => setShowQuickEntry(false)} 
           onSuccess={loadCustomers} 
+          customerId=""
+          customerName=""
         />
       </div>
     );
