@@ -320,6 +320,30 @@ export const aiApi = {
     apiFetch<any>("/ai/business-insights"),
 };
 
+export const documentApi = {
+  list: (type?: string) => apiFetch<any[]>(`/documents${type ? `?type=${type}` : ""}`),
+  
+  upload: (file: File, type: string) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("type", type);
+    
+    return fetch(`${BASE_URL}/documents/upload`, {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${getAccessToken()}`
+      },
+      body: formData
+    }).then(res => res.json()).then(json => json.data);
+  },
+
+  sendToCa: (documentIds: string[]) => 
+    apiFetch<any>("/documents/send-to-ca", { method: "POST", body: JSON.stringify({ documentIds }) }),
+
+  delete: (id: string) => 
+    apiFetch<any>(`/documents/${id}`, { method: "DELETE" }),
+};
+
 export const customerApi = {
   list: (params: any = {}) => {
     const qs = new URLSearchParams(params).toString();

@@ -15,6 +15,7 @@ import Settings from "./pages/Settings/index";
 import Campaigns from "./pages/Campaigns/index";
 import Expenses from "./pages/Expenses/index";
 import Purchases from "./pages/Purchases/index";
+import DocumentVault from "./pages/DocumentVault/index";
 import BillingExpiredPage from "./pages/Billing/Expired";
 import SuspendedPage from "./pages/Billing/Suspended";
 import AdminDashboard from "./pages/Admin";
@@ -49,6 +50,7 @@ export default function App() {
           <Route path="analytics" element={<Analytics />} />
           <Route path="customers" element={<Customers />} />
           <Route path="expenses" element={<Expenses />} />
+          <Route path="documents" element={<DocumentVault />} />
           <Route path="ai-insights" element={<AIInsights />} />
           <Route path="reports" element={<Reports />} />
           <Route path="campaigns" element={<Campaigns />} />

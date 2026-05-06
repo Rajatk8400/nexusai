@@ -1,4 +1,7 @@
 import { Router } from "express";
+import multer from "multer";
+import path from "path";
+import fs from "fs";
 import {
   authController,
   productController,
@@ -23,6 +26,19 @@ const router = Router();
 
 // Middleware group for core business features
 const businessGuard = [authenticate, requireBusiness, checkSubscription];
+
+// ── Multer Configuration ──────────────────────────────────────
+const uploadDir = path.join(__dirname, "../../../uploads");
+if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, uploadDir),
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    cb(null, file.fieldname + "-" + uniqueSuffix + path.extname(file.originalname));
+  }
+});
+const upload = multer({ storage });
 
 // ── Admin ──────────────────────────────────────────────────────
 router.get("/admin/stats",      authenticate, (req, res, next) => adminController.getStats(req as any, res, next));
@@ -94,6 +110,12 @@ router.delete("/expenses/:id", ...businessGuard, (req, res, next) => expenseCont
 // ── Purchases ──────────────────────────────────────────────────
 router.get("/purchases",  ...businessGuard, (req, res, next) => purchaseController.list(req as any, res, next));
 router.post("/purchases", ...businessGuard, (req, res, next) => purchaseController.create(req as any, res, next));
+
+// ── AI Document Engine ────────────────────────────────────────
+router.get("/documents",            ...businessGuard, (req, res, next) => documentController.list(req as any, res, next));
+router.post("/documents/upload",    ...businessGuard, upload.single("file"), (req, res, next) => documentController.upload(req as any, res, next));
+router.post("/documents/send-to-ca", ...businessGuard, (req, res, next) => documentController.sendToCa(req as any, res, next));
+router.delete("/documents/:id",     ...businessGuard, (req, res, next) => documentController.delete(req as any, res, next));
 
 // ── Health ────────────────────────────────────────────────────
 router.get("/health", (req, res) => res.json({ status: "ok", version: "2.1.0", timestamp: new Date().toISOString() }));

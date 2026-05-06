@@ -11,3 +11,4 @@ export * from "./expense.controller";
 export * from "./purchase.controller";
 export * from "./ai.controller";
 export * from "./admin.controller";
+export * from "./document.controller";

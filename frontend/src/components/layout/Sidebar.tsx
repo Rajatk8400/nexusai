@@ -29,6 +29,7 @@ const navItems = [
   { id: "analytics",  label: "Analytics",  path: "/analytics",  Icon: ChartIcon },
   { id: "customers",  label: "Customers",  path: "/customers",  Icon: UsersIcon },
   { id: "expenses",   label: "Expenses",   path: "/expenses",   Icon: ReceiptIcon },
+  { id: "documents",  label: "Doc Engine",  path: "/documents",  Icon: FileIcon, badge: "AI" },
   { id: "ai-insights",label: "AI Insights",path: "/ai-insights",Icon: SparkleIcon, badge: "New" },
   { id: "reports",    label: "Reports",    path: "/reports",    Icon: FileIcon },
   { id: "settings",   label: "Settings",   path: "/settings",   Icon: GearIcon },
