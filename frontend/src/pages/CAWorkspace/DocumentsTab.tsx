@@ -1,11 +1,32 @@
-import { useState, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import Card from "../../components/ui/Card";
 import Button from "../../components/ui/Button";
-import { FileIcon, SparkleIcon, DownloadIcon, PlusIcon } from "../../components/ui/Icons";
+import { FileIcon, SparkleIcon, DownloadIcon, PlusIcon, XIcon } from "../../components/ui/Icons";
+import { documentApi } from "../../services/api";
+import EmptyState from "../../components/ui/EmptyState";
 
 export default function DocumentsTab() {
+  const [documents, setDocuments] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [extractedData, setExtractedData] = useState<any>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    loadDocuments();
+  }, []);
+
+  async function loadDocuments() {
+    try {
+      setLoading(true);
+      const data = await documentApi.list();
+      setDocuments(data || []);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  }
 
   const handleUpload = () => {
     setUploading(true);
@@ -25,6 +46,18 @@ export default function DocumentsTab() {
       });
     }, 3000);
   };
+
+  if (!loading && documents.length === 0 && !uploading && !extractedData) {
+    return (
+      <EmptyState 
+        icon="📄"
+        title="Digital Vault is Empty"
+        description="Upload your purchase bills, GST certificates, and business agreements to manage them securely with AI extraction."
+        actionLabel="Upload First Document"
+        onAction={() => document.getElementById('bill-upload')?.click()}
+      />
+    );
+  }
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -97,7 +130,7 @@ export default function DocumentsTab() {
                      </div>
                   </div>
                   <div className="pt-4 border-t border-slate-100 flex gap-2">
-                     <Button variant="primary" size="sm" className="flex-1" onClick={() => setExtractedData(null)}>Save Entry</Button>
+                     <Button variant="primary" size="sm" className="flex-1" onClick={() => { setExtractedData(null); loadDocuments(); }}>Save Entry</Button>
                      <Button variant="secondary" size="sm" className="flex-1" onClick={() => setExtractedData(null)}>Discard</Button>
                   </div>
                </div>
@@ -111,7 +144,6 @@ export default function DocumentsTab() {
              <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest">Document Center</h3>
              <div className="flex gap-2">
                <Button variant="secondary" size="sm" className="h-8"><DownloadIcon size={14} /></Button>
-               <Button variant="secondary" size="sm" className="h-8"><PlusIcon size={14} /></Button>
              </div>
           </div>
           <div className="overflow-x-auto">
@@ -125,34 +157,23 @@ export default function DocumentsTab() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {[
-                  { name: "AWS_Invoice_May.pdf", type: "Purchase", status: "Extracted", date: "20 May 2024" },
-                  { name: "Office_Rent_Agreement.pdf", type: "Contract", status: "Verified", date: "15 May 2024" },
-                  { name: "GST_GSTR1_Report.pdf", type: "GST", status: "Filed", date: "10 May 2024" },
-                  { name: "Zomato_Food_Bill.png", type: "Expense", status: "Pending", date: "08 May 2024" },
-                  { name: "Client_Project_Proposal.pdf", type: "Other", status: "Stored", date: "05 May 2024" },
-                ].map((doc, idx) => (
+                {documents.map((doc, idx) => (
                   <tr key={idx} className="text-sm hover:bg-slate-50/50 transition-colors group">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
                          <div className="w-8 h-8 rounded bg-slate-100 flex items-center justify-center text-slate-400 group-hover:bg-indigo-50 group-hover:text-indigo-600 transition-colors">
                            <FileIcon size={16} />
                          </div>
-                         <span className="font-bold text-slate-700">{doc.name}</span>
+                         <span className="font-bold text-slate-700 truncate max-w-[150px]">{doc.name}</span>
                       </div>
                     </td>
                     <td className="px-6 py-4 text-xs font-medium text-slate-500">{doc.type}</td>
                     <td className="px-6 py-4">
-                      <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider ${
-                        doc.status === "Extracted" ? "bg-blue-100 text-blue-600" :
-                        doc.status === "Verified" ? "bg-emerald-100 text-emerald-600" :
-                        doc.status === "Filed" ? "bg-indigo-100 text-indigo-600" :
-                        "bg-slate-100 text-slate-600"
-                      }`}>
-                        {doc.status}
+                      <span className="px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-600">
+                        Stored
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-right text-xs text-slate-400 font-medium">{doc.date}</td>
+                    <td className="px-6 py-4 text-right text-xs text-slate-400 font-medium">{new Date(doc.createdAt).toLocaleDateString()}</td>
                   </tr>
                 ))}
               </tbody>

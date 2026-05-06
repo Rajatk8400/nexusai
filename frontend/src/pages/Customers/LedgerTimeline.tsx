@@ -1,4 +1,7 @@
+import { useState, useEffect } from "react";
 import Card from "../../components/ui/Card";
+import { customerApi } from "../../services/api";
+import EmptyState from "../../components/ui/EmptyState";
 
 interface Transaction {
   id: string;
@@ -11,14 +14,35 @@ interface Transaction {
 }
 
 export default function LedgerTimeline({ customerId }: { customerId: string }) {
-  // Mock data for demonstration
-  const transactions: Transaction[] = [
-    { id: "1", type: "PAYMENT", amount: 5000, balanceBefore: 8000, balanceAfter: 3000, notes: "Received via GPay", createdAt: "2024-05-01T10:00:00Z" },
-    { id: "2", type: "UDHAR", amount: 4500, balanceBefore: 3500, balanceAfter: 8000, notes: "Grocery items + Milk", createdAt: "2024-04-28T14:30:00Z" },
-    { id: "3", type: "SALE", amount: 1500, balanceBefore: 2000, balanceAfter: 3500, notes: "Invoice #1024", createdAt: "2024-04-25T11:15:00Z" },
-    { id: "4", type: "PAYMENT", amount: 10000, balanceBefore: 12000, balanceAfter: 2000, notes: "Cash payment", createdAt: "2024-04-20T09:00:00Z" },
-    { id: "5", type: "UDHAR", amount: 12000, balanceBefore: 0, balanceAfter: 12000, notes: "Opening balance / Credit limit sync", createdAt: "2024-04-15T16:00:00Z" },
-  ];
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadTransactions();
+  }, [customerId]);
+
+  async function loadTransactions() {
+    try {
+      setLoading(true);
+      const data = await customerApi.getTransactions(customerId);
+      setTransactions(data || []);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  if (!loading && transactions.length === 0) {
+    return (
+      <EmptyState 
+        icon="📖"
+        title="No History Yet"
+        description="This customer has no recorded transactions. Add their first Udhar or Payment to start the Khata book."
+        className="bg-transparent border-none shadow-none p-4"
+      />
+    );
+  }
 
   return (
     <div className="relative space-y-8 before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-slate-200 before:to-transparent">

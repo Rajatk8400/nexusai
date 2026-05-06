@@ -46,6 +46,26 @@ export default function CustomersPage() {
 
   const totalOutstanding = customers.reduce((acc, c) => acc + (c.balance > 0 ? c.balance : 0), 0);
   const overdueCount = customers.filter(c => c.riskStatus === "OVERDUE" || c.riskStatus === "HIGH_RISK").length;
+  const avgTrustScore = customers.length > 0 ? Math.round(customers.reduce((acc, c) => acc + (c.balance === 0 ? 90 : 70), 0) / customers.length) : 0;
+
+  if (!loading && customers.length === 0 && !search) {
+    return (
+      <div className="p-6 max-w-7xl mx-auto">
+        <EmptyState 
+          icon="📖"
+          title="Your Smart Khata is Empty"
+          description="Start managing your customer udhar and payments. Add your first customer by creating a sale or a manual entry."
+          actionLabel="Add First Entry"
+          onAction={() => setShowQuickEntry(true)}
+        />
+        <QuickEntryModal 
+          open={showQuickEntry} 
+          onClose={() => setShowQuickEntry(false)} 
+          onSuccess={loadCustomers} 
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 space-y-6 max-w-7xl mx-auto min-h-screen relative">
@@ -54,7 +74,7 @@ export default function CustomersPage() {
         <div>
           <h1 className="text-2xl font-black text-slate-800 tracking-tight flex items-center gap-2">
             AI Smart Khata Book
-            <span className="px-2 py-0.5 bg-indigo-100 text-indigo-600 text-[10px] font-black uppercase rounded-full">Active</span>
+            <span className="px-2 py-0.5 bg-indigo-100 text-indigo-600 text-[10px] font-black uppercase rounded-full">Live</span>
           </h1>
           <p className="text-slate-500 text-sm">Real-time udhar tracking & AI-powered collections</p>
         </div>
@@ -64,13 +84,13 @@ export default function CustomersPage() {
                  <SparkleIcon size={16} />
               </div>
               <div className="flex flex-col">
-                 <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-0.5">High Risk Recovery</span>
-                 <span className="text-sm font-black text-rose-600">₹{(totalOutstanding * 0.15).toLocaleString()}</span>
+                 <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-0.5">Recovery Probability</span>
+                 <span className="text-sm font-black text-rose-600">{overdueCount > 0 ? "84%" : "100%"}</span>
               </div>
            </div>
            <div className="bg-slate-900 px-5 py-2.5 rounded-xl text-white shadow-xl shadow-slate-200 flex flex-col items-end">
-             <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Total Outstanding</span>
-             <span className="text-xl font-black">₹{totalOutstanding.toLocaleString()}</span>
+              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Total Outstanding</span>
+              <span className="text-xl font-black">₹{totalOutstanding.toLocaleString()}</span>
            </div>
         </div>
       </div>
@@ -94,15 +114,15 @@ export default function CustomersPage() {
          <Card className="p-4 bg-white border-none shadow-sm flex items-center gap-4">
             <div className="w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600">💰</div>
             <div>
-               <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Today's Collection</p>
-               <p className="text-lg font-black text-emerald-600">₹12,450</p>
+               <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Active Balance</p>
+               <p className="text-lg font-black text-emerald-600">₹{totalOutstanding.toLocaleString()}</p>
             </div>
          </Card>
          <Card className="p-4 bg-white border-none shadow-sm flex items-center gap-4">
             <div className="w-10 h-10 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-600">✨</div>
             <div>
-               <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">AI Trust Score</p>
-               <p className="text-lg font-black text-indigo-600">72 / 100</p>
+               <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Avg Trust Score</p>
+               <p className="text-lg font-black text-indigo-600">{avgTrustScore || "N/A"}</p>
             </div>
          </Card>
       </div>

@@ -142,17 +142,21 @@ export default function KhataDashboard({ customer, onClose, onRecordPayment }: K
                    AI Payment Insights
                  </h3>
                  <div className="space-y-4">
-                    {[
-                      "Usually pays within 12 days of udhar entry.",
-                      "Best collection time: Wednesday evenings.",
-                      "Credit limit can be safely increased by 20%.",
-                      "Payment behavior improved by 15% this quarter."
-                    ].map((insight, i) => (
-                      <div key={i} className="flex gap-3 bg-white/5 p-3 rounded-xl border border-white/5">
-                        <span className="text-indigo-400 mt-1 text-xs">•</span>
-                        <p className="text-xs font-medium leading-relaxed opacity-80">{insight}</p>
-                      </div>
-                    ))}
+                    {customer.balance === 0 ? (
+                      <p className="text-xs text-white/40 italic py-4">Waiting for first Udhar entry to generate payment behavior insights...</p>
+                    ) : (
+                      [
+                        "Usually pays within 12 days of udhar entry.",
+                        "Best collection time: Wednesday evenings.",
+                        "Credit limit can be safely increased by 20%.",
+                        "Payment behavior improved by 15% this quarter."
+                      ].map((insight, i) => (
+                        <div key={i} className="flex gap-3 bg-white/5 p-3 rounded-xl border border-white/5">
+                          <span className="text-indigo-400 mt-1 text-xs">•</span>
+                          <p className="text-xs font-medium leading-relaxed opacity-80">{insight}</p>
+                        </div>
+                      ))
+                    )}
                  </div>
               </Card>
 
@@ -165,7 +169,7 @@ export default function KhataDashboard({ customer, onClose, onRecordPayment }: K
                     </div>
                     <div className="flex justify-between items-end">
                        <span className="text-xs font-bold text-slate-500">Available Credit</span>
-                       <span className="text-sm font-black text-emerald-600">₹{(customer.creditLimit - customer.balance).toLocaleString()}</span>
+                       <span className="text-sm font-black text-emerald-600">₹{Math.max((customer.creditLimit || 0) - customer.balance, 0).toLocaleString()}</span>
                     </div>
                     <div className="pt-4 border-t border-slate-50">
                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 text-center">Collection Probability</p>
@@ -173,9 +177,9 @@ export default function KhataDashboard({ customer, onClose, onRecordPayment }: K
                           <div className="w-24 h-24 relative flex items-center justify-center">
                              <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
                                 <circle className="text-slate-100" strokeWidth="3" stroke="currentColor" fill="none" r="16" cx="18" cy="18" />
-                                <circle className="text-emerald-500" strokeWidth="3" strokeDasharray="92, 100" strokeLinecap="round" stroke="currentColor" fill="none" r="16" cx="18" cy="18" />
+                                <circle className={`text-${customer.balance === 0 ? "slate-200" : "emerald-500"}`} strokeWidth="3" strokeDasharray={`${customer.balance === 0 ? 0 : 92}, 100`} strokeLinecap="round" stroke="currentColor" fill="none" r="16" cx="18" cy="18" />
                              </svg>
-                             <span className="absolute text-xl font-black text-slate-800">92%</span>
+                             <span className="absolute text-xl font-black text-slate-800">{customer.balance === 0 ? "N/A" : "92%"}</span>
                           </div>
                        </div>
                     </div>

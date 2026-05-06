@@ -1,149 +1,108 @@
+import { useState, useEffect } from "react";
 import Card from "../../components/ui/Card";
 import Button from "../../components/ui/Button";
-import { 
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell
-} from "recharts";
+import { DownloadIcon, ShieldCheckIcon } from "../../components/ui/Icons";
+import { reportApi } from "../../services/api";
+import EmptyState from "../../components/ui/EmptyState";
 
 export default function GSTTab() {
-  const gstSummary = [
-    { label: "CGST", payable: "₹45,000", claimable: "₹12,000" },
-    { label: "SGST", payable: "₹45,000", claimable: "₹12,000" },
-    { label: "IGST", payable: "₹30,000", claimable: "₹21,000" },
-  ];
+  const [gstData, setGstData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
-  const chartData = [
-    { month: "Jan", payable: 120, claimable: 80 },
-    { month: "Feb", payable: 90, claimable: 110 },
-    { month: "Mar", payable: 150, claimable: 130 },
-    { month: "Apr", payable: 110, claimable: 90 },
-    { month: "May", payable: 140, claimable: 100 },
-  ];
+  useEffect(() => {
+    loadGstData();
+  }, []);
+
+  async function loadGstData() {
+    try {
+      setLoading(true);
+      const now = new Date();
+      const res = await reportApi.getGSTR1({ month: now.getMonth() + 1, year: now.getFullYear() });
+      setGstData(res);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  if (!loading && (!gstData || gstData.totalInvoices === 0)) {
+    return (
+      <EmptyState 
+        icon="🏦"
+        title="GST Reports Not Ready"
+        description="Your GST compliance reports (GSTR-1, GSTR-3B) will be automatically generated once you start recording sales and purchases."
+        actionLabel="Go to Sales"
+        onAction={() => {}}
+      />
+    );
+  }
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="md:col-span-2 p-6">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h3 className="text-sm font-black text-slate-800 uppercase tracking-widest">GST Filing Analytics</h3>
-              <p className="text-xs text-slate-400 mt-0.5">Monthly comparison of Tax Payable vs Claimable</p>
-            </div>
-            <div className="flex gap-4">
-               <div className="flex items-center gap-2">
-                 <div className="w-3 h-3 bg-indigo-600 rounded-full" />
-                 <span className="text-[10px] font-bold text-slate-500 uppercase">Payable</span>
-               </div>
-               <div className="flex items-center gap-2">
-                 <div className="w-3 h-3 bg-emerald-500 rounded-full" />
-                 <span className="text-[10px] font-bold text-slate-500 uppercase">Claimable</span>
-               </div>
-            </div>
-          </div>
-          <div className="h-[250px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{fontSize: 10, fill: '#94a3b8'}} />
-                <YAxis axisLine={false} tickLine={false} tick={{fontSize: 10, fill: '#94a3b8'}} tickFormatter={(v) => `₹${v}k`} />
-                <Tooltip cursor={{fill: '#f8fafc'}} />
-                <Bar dataKey="payable" fill="#4f46e5" radius={[4, 4, 0, 0]} barSize={20} />
-                <Bar dataKey="claimable" fill="#10b981" radius={[4, 4, 0, 0]} barSize={20} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </Card>
-
         <Card className="p-6 bg-slate-900 text-white border-none shadow-xl">
-           <h3 className="text-xs font-black uppercase tracking-widest mb-6">Filing Readiness</h3>
-           <div className="space-y-6">
-              <div>
-                <div className="flex justify-between items-end mb-2">
-                  <p className="text-xs font-bold text-slate-400">GSTR-1 (Sales)</p>
-                  <p className="text-sm font-black text-emerald-400">Ready</p>
-                </div>
-                <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
-                  <div className="h-full bg-emerald-500 rounded-full" style={{ width: '100%' }} />
-                </div>
-              </div>
-              <div>
-                <div className="flex justify-between items-end mb-2">
-                  <p className="text-xs font-bold text-slate-400">GSTR-3B (Summary)</p>
-                  <p className="text-sm font-black text-amber-400">85% Complete</p>
-                </div>
-                <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
-                  <div className="h-full bg-amber-500 rounded-full" style={{ width: '85%' }} />
-                </div>
-              </div>
-              <div className="pt-4 space-y-4">
-                 <div className="p-3 bg-white/5 rounded-xl border border-white/5">
-                    <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-1">Upcoming Deadline</p>
-                    <p className="text-sm font-bold">20 June 2024 (GSTR-3B)</p>
-                 </div>
-                 <Button variant="primary" fullWidth size="sm">Download GSTR-1 JSON</Button>
-              </div>
+           <p className="text-[10px] font-black opacity-50 uppercase tracking-widest mb-1">GST Payable (B2B + B2C)</p>
+           <h2 className="text-3xl font-black mb-4">₹{(gstData?.totalTax || 0).toLocaleString()}</h2>
+           <div className="flex gap-2">
+              <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 text-[10px] font-black uppercase tracking-wider">Ready to File</span>
            </div>
         </Card>
+
+        <Card className="p-6 bg-indigo-600 text-white border-none shadow-xl">
+           <p className="text-[10px] font-black opacity-50 uppercase tracking-widest mb-1">ITC Claimable (Purchases)</p>
+           <h2 className="text-3xl font-black mb-4">₹{(gstData?.totalITC || 0).toLocaleString()}</h2>
+           <Button variant="secondary" size="sm" fullWidth className="bg-white/10 border-white/20 text-white hover:bg-white/20">Verify Bills</Button>
+        </Card>
+
+        <Card className="p-6">
+           <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Compliance Status</p>
+           <div className="flex items-center gap-3 mt-2">
+              <div className="w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600">
+                 <ShieldCheckIcon size={24} />
+              </div>
+              <div>
+                 <p className="text-sm font-black text-slate-800">GSTR-1 (Current Month)</p>
+                 <p className="text-xs text-slate-400 font-medium">Ready for portal upload</p>
+              </div>
+           </div>
+           <Button variant="primary" size="sm" className="w-full mt-4 flex items-center justify-center gap-2">
+              <DownloadIcon size={14} /> Download JSON
+           </Button>
+        </Card>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-         <Card className="p-0 overflow-hidden">
-            <div className="px-6 py-4 bg-slate-50/50 border-b border-slate-100">
-               <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest">Tax Breakdown</h3>
-            </div>
-            <div className="overflow-x-auto">
-               <table className="w-full text-left">
-                  <thead className="text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-50">
-                     <tr>
-                        <th className="px-6 py-4">Component</th>
-                        <th className="px-6 py-4">Payable</th>
-                        <th className="px-6 py-4">Claimable (ITC)</th>
-                        <th className="px-6 py-4 text-right">Net</th>
-                     </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-50">
-                     {gstSummary.map((gst) => (
-                        <tr key={gst.label} className="text-sm hover:bg-slate-50/30">
-                           <td className="px-6 py-4 font-bold text-slate-700">{gst.label}</td>
-                           <td className="px-6 py-4 text-slate-600 font-medium">{gst.payable}</td>
-                           <td className="px-6 py-4 text-emerald-600 font-bold">{gst.claimable}</td>
-                           <td className="px-6 py-4 text-right font-black text-slate-800">
-                             ₹{ (parseInt(gst.payable.replace(/[^0-9]/g, '')) - parseInt(gst.claimable.replace(/[^0-9]/g, ''))).toLocaleString() }
-                           </td>
-                        </tr>
-                     ))}
-                  </tbody>
-               </table>
-            </div>
-         </Card>
-
-         <Card className="p-6 border-l-4 border-l-rose-500">
-            <div className="flex items-center gap-3 mb-4">
-               <div className="w-10 h-10 rounded-xl bg-rose-50 flex items-center justify-center text-rose-600 font-bold">
-                 ⚠️
-               </div>
-               <div>
-                  <h3 className="text-sm font-black text-slate-800 uppercase tracking-widest">AI Mismatch Alerts</h3>
-                  <p className="text-xs text-slate-400">Potentially missing tax credits or filing errors</p>
-               </div>
-            </div>
-            <div className="space-y-3">
-               <div className="p-4 bg-rose-50/50 rounded-xl border border-rose-100">
-                  <p className="text-xs font-bold text-rose-800 mb-1">GSTR-2B Mismatch</p>
-                  <p className="text-xs text-rose-600 leading-relaxed">
-                    Vendor <span className="font-bold">Nexus Tech Solutions</span> has not filed GSTR-1. ₹4,200 ITC cannot be claimed yet.
-                  </p>
-                  <Button variant="secondary" size="sm" className="mt-3 bg-white border-rose-200 text-rose-700 hover:bg-rose-50">Contact Vendor</Button>
-               </div>
-               <div className="p-4 bg-amber-50/50 rounded-xl border border-amber-100">
-                  <p className="text-xs font-bold text-amber-800 mb-1">Duplicate Invoice Detection</p>
-                  <p className="text-xs text-amber-600 leading-relaxed">
-                    Invoice <span className="font-bold">#9920</span> for ₹12,000 appears to be a duplicate of #9918.
-                  </p>
-                  <Button variant="secondary" size="sm" className="mt-3 bg-white border-amber-200 text-amber-700 hover:bg-amber-50">Resolve Mismatch</Button>
-               </div>
-            </div>
-         </Card>
-      </div>
+      <Card className="overflow-hidden">
+        <div className="px-6 py-4 border-b border-slate-50 bg-slate-50/50">
+           <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest">GSTR-1 Summary (B2B)</h3>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left">
+            <thead className="bg-slate-50/50 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">
+              <tr>
+                <th className="px-6 py-4">Receiver GSTIN</th>
+                <th className="px-6 py-4">Invoice Value</th>
+                <th className="px-6 py-4">Taxable Value</th>
+                <th className="px-6 py-4">Central Tax</th>
+                <th className="px-6 py-4">State Tax</th>
+                <th className="px-6 py-4">Total GST</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {(gstData?.b2bInvoices || []).map((row: any, idx: number) => (
+                <tr key={idx} className="text-sm hover:bg-slate-50/50 transition-colors">
+                  <td className="px-6 py-4 font-bold text-slate-700">{row.receiverGst}</td>
+                  <td className="px-6 py-4 font-bold text-slate-800">₹{row.totalValue.toLocaleString()}</td>
+                  <td className="px-6 py-4 text-slate-600 font-medium">₹{row.taxableValue.toLocaleString()}</td>
+                  <td className="px-6 py-4 text-slate-600 font-medium">₹{row.cgst.toLocaleString()}</td>
+                  <td className="px-6 py-4 text-slate-600 font-medium">₹{row.sgst.toLocaleString()}</td>
+                  <td className="px-6 py-4 font-black text-indigo-600">₹{row.totalTax.toLocaleString()}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </Card>
     </div>
   );
 }
