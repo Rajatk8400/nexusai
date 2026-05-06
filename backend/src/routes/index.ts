@@ -16,6 +16,7 @@ import {
   expenseController,
   purchaseController,
   adminController,
+  documentController,
 } from "../controllers";
 import { authenticate, requireBusiness } from "../middlewares/auth.middleware";
 import { checkSubscription } from "../middlewares/subscription.middleware";

@@ -1,6 +1,6 @@
 import { Response, NextFunction } from "express";
 import { documentService } from "../services/document.service";
-import { sendSuccess } from "../utils/response";
+import { sendSuccess, sendCreated } from "../utils/response";
 import { AuthRequest } from "../middlewares/auth.middleware";
 import { AppError } from "../utils/AppError";
 
@@ -10,7 +10,7 @@ export const documentController = {
       if (!req.file) throw new AppError("No file uploaded", 400);
       const { type } = req.body;
       const doc = await documentService.processDocument(req.user!.businessId!, req.file, type || "BILL");
-      sendSuccess(res, doc, 201);
+      sendCreated(res, doc);
     } catch (e) { next(e); }
   },
 

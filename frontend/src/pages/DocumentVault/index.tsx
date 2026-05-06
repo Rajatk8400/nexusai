@@ -89,7 +89,7 @@ export default function DocumentVaultPage() {
         </div>
         <div className="flex gap-2">
           <Button 
-            variant="outline" 
+            variant="secondary" 
             onClick={() => fileInputRef.current?.click()}
             disabled={uploading}
           >

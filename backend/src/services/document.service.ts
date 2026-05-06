@@ -1,11 +1,11 @@
-import { DocumentRecord } from "../models";
+import { DocumentRecord, IDocumentRecord } from "../models";
 import { AppError } from "../utils/AppError";
 import { createLogger } from "../config/logger";
 
 const log = createLogger("DocumentService");
 
 export class DocumentService {
-  async listDocuments(businessId: string, type?: string) {
+  async listDocuments(businessId: string, type?: string): Promise<any[]> {
     const filter: any = { businessId, deletedAt: null };
     if (type) filter.type = type;
     return DocumentRecord.find(filter).sort({ createdAt: -1 }).lean();
@@ -59,8 +59,8 @@ export class DocumentService {
       await doc.save();
 
       log.info("AI Extraction completed", { docId });
-    } catch (e) {
-      log.error("AI Extraction failed", e);
+    } catch (e: any) {
+      log.error("AI Extraction failed", { error: e.message, docId });
       await DocumentRecord.findByIdAndUpdate(docId, { status: "FAILED" });
     }
   }

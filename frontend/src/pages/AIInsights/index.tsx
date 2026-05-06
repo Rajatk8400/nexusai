@@ -113,13 +113,13 @@ export default function AIInsightsPage() {
                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Critical Stock Alerts</p>
                     <p className="text-3xl font-black text-slate-800">{criticalItems.length}</p>
                     <p className="text-xs text-slate-500 mt-1">Products running out in &lt; 7 days</p>
-                    <Button variant="outline" size="sm" className="mt-4 w-full" onClick={() => setActiveTab("inventory")}>View Stock Insights</Button>
+                    <Button variant="secondary" size="sm" className="mt-4 w-full" onClick={() => setActiveTab("inventory")}>View Stock Insights</Button>
                   </Card>
                   <Card className="p-5 border-l-4 border-l-emerald-500">
                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Top Performer</p>
                     <p className="text-3xl font-black text-slate-800 truncate">{staffProductivity[0]?.staffName || "—"}</p>
                     <p className="text-xs text-slate-500 mt-1">Highest revenue generated this month</p>
-                    <Button variant="outline" size="sm" className="mt-4 w-full" onClick={() => setActiveTab("staff")}>View Staff Metrics</Button>
+                    <Button variant="secondary" size="sm" className="mt-4 w-full" onClick={() => setActiveTab("staff")}>View Staff Metrics</Button>
                   </Card>
                 </div>
               </div>
@@ -166,7 +166,7 @@ export default function AIInsightsPage() {
                   <h3 className="text-sm font-black text-slate-800 uppercase tracking-widest">Inventory Health & Predictions</h3>
                   <p className="text-xs text-slate-400 mt-0.5">Predictive stock management based on sales velocity</p>
                 </div>
-                <Button onClick={loadAllData} variant="outline" size="sm">Refresh Model</Button>
+                <Button onClick={loadAllData} variant="secondary" size="sm">Refresh Model</Button>
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-left">

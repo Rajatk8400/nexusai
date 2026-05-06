@@ -21,6 +21,7 @@ interface Business {
   plan?: string;
   planStatus?: string;
   planExpiresAt?: string;
+  status?: string;
 }
 
 interface Branch {
