@@ -288,7 +288,7 @@ export class SaleService {
     const [thisMonth, lastMonth, todayAgg] = await Promise.all([
       Sale.aggregate([
         { $match: { ...filter, saleDateAt: { $gte: startOfMonth } } },
-        { $group: { _id: null, revenue: { $sum: "$totalAmount" }, profit: { $sum: "$profitAmount" }, orders: { $sum: 1 } } },
+        { $group: { _id: null, revenue: { $sum: "$totalAmount" }, profit: { $sum: "$profitAmount" }, taxAmount: { $sum: "$taxAmount" }, orders: { $sum: 1 } } },
       ]),
       Sale.aggregate([
         { $match: { ...filter, saleDateAt: { $gte: startOfLastMonth, $lte: endOfLastMonth } } },
@@ -300,7 +300,7 @@ export class SaleService {
       ]),
     ]);
 
-    const curr = thisMonth[0] ?? { revenue: 0, profit: 0, orders: 0 };
+    const curr = thisMonth[0] ?? { revenue: 0, profit: 0, taxAmount: 0, orders: 0 };
     const prev = lastMonth[0] ?? { revenue: 0, orders: 0 };
     const today = todayAgg[0] ?? { revenue: 0, orders: 0 };
 
@@ -311,6 +311,7 @@ export class SaleService {
     return {
       monthRevenue: Math.round(curr.revenue * 100) / 100,
       monthProfit: Math.round(curr.profit * 100) / 100,
+      taxPayable: Math.round(curr.taxAmount * 100) / 100,
       monthOrders: curr.orders,
       todayRevenue: Math.round(today.revenue * 100) / 100,
       todayOrders: today.orders,

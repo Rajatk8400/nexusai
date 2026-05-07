@@ -1,4 +1,4 @@
-import { Sale, Product } from "../models";
+import { Sale, Product, Purchase } from "../models";
 import { AppError } from "../utils/AppError";
 
 export class ReportService {
@@ -23,12 +23,12 @@ export class ReportService {
         date: sale.saleDateAt,
         totalValue: sale.totalAmount,
         taxableValue: sale.subtotal,
-        taxAmount: sale.taxAmount,
+        totalTax: sale.taxAmount,
         cgst: sale.cgst,
         sgst: sale.sgst,
         igst: sale.igst,
         customerName: sale.customerName,
-        customerGst: (sale as any).customerGst
+        receiverGst: (sale as any).customerGst || (sale as any).customerPhone || "Unregistered"
       };
 
       if ((sale as any).customerGst) {
@@ -57,15 +57,25 @@ export class ReportService {
       }
     }
 
+    const purchases = await Purchase.find({
+      businessId,
+      purchaseDateAt: { $gte: startDate, $lte: endDate }
+    }).lean();
+
+    const totalITC = purchases.reduce((acc, p) => acc + (p.taxAmount || 0), 0);
+    const totalTax = sales.reduce((acc, s) => acc + (s.taxAmount || 0), 0);
+
     return {
       period: `${month}-${year}`,
+      totalTax,
+      totalITC,
       summary: {
         totalSales: sales.length,
         totalRevenue: sales.reduce((acc, s) => acc + s.totalAmount, 0),
-        totalTax: sales.reduce((acc, s) => acc + s.taxAmount, 0),
+        totalTax,
       },
-      b2b,
-      b2c,
+      b2bInvoices: b2b,
+      b2cInvoices: b2c,
       hsn: Object.values(hsnSummary)
     };
   }
