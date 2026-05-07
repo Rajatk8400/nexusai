@@ -29,6 +29,7 @@ export default function ReportsPage() {
     if (!data) return;
     
     // Simple CSV generation for B2C small sales
+    let csv = "Invoice Number,Date,Taxable Value,Tax Amount,Total Value\n";
     const b2c = data.b2cInvoices || [];
     b2c.forEach((s: any) => {
       csv += `${s.invoiceNumber},${new Date(s.date).toLocaleDateString()},${s.taxableValue},${s.totalTax},${s.totalValue}\n`;
