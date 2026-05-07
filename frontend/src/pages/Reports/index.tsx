@@ -29,9 +29,9 @@ export default function ReportsPage() {
     if (!data) return;
     
     // Simple CSV generation for B2C small sales
-    let csv = "Invoice Number,Date,Taxable Value,Tax Amount,Total Value\n";
-    data.b2c.forEach((s: any) => {
-      csv += `${s.invoiceNumber},${new Date(s.date).toLocaleDateString()},${s.taxableValue},${s.taxAmount},${s.totalValue}\n`;
+    const b2c = data.b2cInvoices || [];
+    b2c.forEach((s: any) => {
+      csv += `${s.invoiceNumber},${new Date(s.date).toLocaleDateString()},${s.taxableValue},${s.totalTax},${s.totalValue}\n`;
     });
 
     const blob = new Blob([csv], { type: 'text/csv' });
@@ -137,7 +137,7 @@ export default function ReportsPage() {
             <Card className="overflow-hidden">
               <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
                 <h3 className="font-bold text-slate-800 text-sm uppercase tracking-widest">B2B Sales (GST Customers)</h3>
-                <span className="text-[10px] font-bold text-blue-500 bg-blue-50 px-2 py-0.5 rounded-full">{data.b2b.length} Invoices</span>
+                <span className="text-[10px] font-bold text-blue-500 bg-blue-50 px-2 py-0.5 rounded-full">{(data.b2bInvoices || []).length} Invoices</span>
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-left">
@@ -149,14 +149,14 @@ export default function ReportsPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
-                    {data.b2b.map((s: any, i: number) => (
+                    {(data.b2bInvoices || []).map((s: any, i: number) => (
                       <tr key={i} className="text-sm hover:bg-slate-50 transition-colors">
                         <td className="px-6 py-3 font-bold text-slate-800">{s.invoiceNumber}</td>
-                        <td className="px-6 py-3 text-slate-500 font-mono text-xs">{s.customerGst}</td>
+                        <td className="px-6 py-3 text-slate-500 font-mono text-xs">{s.receiverGst}</td>
                         <td className="px-6 py-3 text-right text-slate-800 font-black">₹{s.totalValue.toLocaleString()}</td>
                       </tr>
                     ))}
-                    {data.b2b.length === 0 && (
+                    {(!data.b2bInvoices || data.b2bInvoices.length === 0) && (
                       <tr><td colSpan={3} className="px-6 py-8 text-center text-slate-400 font-medium">No B2B sales this month</td></tr>
                     )}
                   </tbody>
