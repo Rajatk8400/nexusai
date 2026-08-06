@@ -102,6 +102,12 @@ export const authApi = {
   login: (email: string, password: string) =>
     apiFetch<any>("/auth/login", { method: "POST", body: JSON.stringify({ email, password }) }),
 
+  forgotPassword: (email: string) =>
+    apiFetch<any>("/auth/forgot-password", { method: "POST", body: JSON.stringify({ email }) }),
+
+  resetPassword: (email: string, newPassword: string) =>
+    apiFetch<any>("/auth/reset-password", { method: "POST", body: JSON.stringify({ email, newPassword }) }),
+
   logout: () => apiFetch<any>("/auth/logout", { method: "POST" }),
 
   profile: () => apiFetch<any>("/auth/profile"),

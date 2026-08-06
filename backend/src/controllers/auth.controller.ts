@@ -19,6 +19,22 @@ export const authController = {
     } catch (e) { next(e); }
   },
 
+  async forgotPassword(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { email } = req.body;
+      const result = await authService.forgotPassword(email);
+      sendSuccess(res, result, "Account verified");
+    } catch (e) { next(e); }
+  },
+
+  async resetPassword(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { email, newPassword } = req.body;
+      const result = await authService.resetPassword(email, newPassword);
+      sendSuccess(res, result, "Password updated successfully");
+    } catch (e) { next(e); }
+  },
+
   async refresh(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const { refreshToken } = req.body;

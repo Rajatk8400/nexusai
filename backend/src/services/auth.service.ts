@@ -200,6 +200,25 @@ export class AuthService {
     };
   }
 
+  async forgotPassword(email: string) {
+    const user = await User.findOne({ email: email.toLowerCase(), deletedAt: null });
+    if (!user) throw new AppError("No account found with this email address", 404);
+    
+    log.info("Forgot password requested for email", { email });
+    return { success: true, email: user.email, message: "Account verified. Enter your new password below." };
+  }
+
+  async resetPassword(email: string, newPassword: string) {
+    const user = await User.findOne({ email: email.toLowerCase(), deletedAt: null });
+    if (!user) throw new AppError("User not found", 404);
+
+    const passwordHash = await bcrypt.hash(newPassword, 12);
+    await User.findByIdAndUpdate(user._id, { passwordHash });
+
+    log.info("Password successfully reset", { userId: user._id, email });
+    return { success: true, message: "Password updated successfully. Please log in with your new password." };
+  }
+
   async refreshTokens(token: string) {
     let payload: RefreshTokenPayload;
     try {

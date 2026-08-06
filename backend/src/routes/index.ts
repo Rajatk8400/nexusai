@@ -48,9 +48,11 @@ router.post("/admin/approve",   authenticate, (req: Request, res: Response, next
 router.post("/admin/update-plan", authenticate, (req: Request, res: Response, next: NextFunction) => adminController.updatePlan(req as AuthRequest, res, next));
 
 // ── Auth (public) ─────────────────────────────────────────────
-router.post("/auth/register", validate(authValidation.register), (req: Request, res: Response, next: NextFunction) => authController.register(req as AuthRequest, res, next));
-router.post("/auth/login",    validate(authValidation.login), (req: Request, res: Response, next: NextFunction) => authController.login(req as AuthRequest, res, next));
-router.post("/auth/refresh",  validate(authValidation.refresh), (req: Request, res: Response, next: NextFunction) => authController.refresh(req as AuthRequest, res, next));
+router.post("/auth/register",        validate(authValidation.register),       (req: Request, res: Response, next: NextFunction) => authController.register(req as AuthRequest, res, next));
+router.post("/auth/login",           validate(authValidation.login),          (req: Request, res: Response, next: NextFunction) => authController.login(req as AuthRequest, res, next));
+router.post("/auth/forgot-password", validate(authValidation.forgotPassword), (req: Request, res: Response, next: NextFunction) => authController.forgotPassword(req as AuthRequest, res, next));
+router.post("/auth/reset-password",  validate(authValidation.resetPassword),  (req: Request, res: Response, next: NextFunction) => authController.resetPassword(req as AuthRequest, res, next));
+router.post("/auth/refresh",         validate(authValidation.refresh),        (req: Request, res: Response, next: NextFunction) => authController.refresh(req as AuthRequest, res, next));
 
 // ── Auth (protected) ──────────────────────────────────────────
 router.post("/auth/logout",  authenticate, (req: Request, res: Response, next: NextFunction) => authController.logout(req as AuthRequest, res, next));
