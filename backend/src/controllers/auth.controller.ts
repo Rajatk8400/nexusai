@@ -35,6 +35,14 @@ export const authController = {
     } catch (e) { next(e); }
   },
 
+  async changePassword(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { currentPassword, newPassword } = req.body;
+      const result = await authService.changePassword(req.user!.id, currentPassword, newPassword);
+      sendSuccess(res, result, "Password updated successfully");
+    } catch (e) { next(e); }
+  },
+
   async refresh(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const { refreshToken } = req.body;

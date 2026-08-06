@@ -108,6 +108,9 @@ export const authApi = {
   resetPassword: (email: string, newPassword: string) =>
     apiFetch<any>("/auth/reset-password", { method: "POST", body: JSON.stringify({ email, newPassword }) }),
 
+  changePassword: (currentPassword: string, newPassword: string) =>
+    apiFetch<any>("/auth/change-password", { method: "POST", body: JSON.stringify({ currentPassword, newPassword }) }),
+
   logout: () => apiFetch<any>("/auth/logout", { method: "POST" }),
 
   profile: () => apiFetch<any>("/auth/profile"),

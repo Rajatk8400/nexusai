@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import Card from "../../components/ui/Card";
 import Button from "../../components/ui/Button";
 import { useAuth } from "../../context/AuthContext";
+import { authApi } from "../../services/api";
 
 export default function SettingsPage() {
   const { business, user } = useAuth();
@@ -15,6 +16,14 @@ export default function SettingsPage() {
     upiId: (business as any)?.upiId || "",
     gstNumber: (business as any)?.gstNumber || "",
   });
+
+  // Change Password state
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [passLoading, setPassLoading] = useState(false);
+  const [passError, setPassError] = useState<string | null>(null);
+  const [passSuccess, setPassSuccess] = useState<string | null>(null);
 
   useEffect(() => {
     if (business) {
@@ -43,6 +52,28 @@ export default function SettingsPage() {
       alert("Error saving settings");
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newPassword !== confirmPassword) {
+      setPassError("New passwords do not match.");
+      return;
+    }
+    setPassLoading(true);
+    setPassError(null);
+    setPassSuccess(null);
+    try {
+      await authApi.changePassword(currentPassword, newPassword);
+      setPassSuccess("Password updated successfully!");
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+    } catch (err) {
+      setPassError(err instanceof Error ? err.message : "Failed to change password.");
+    } finally {
+      setPassLoading(false);
     }
   };
 
@@ -142,26 +173,94 @@ export default function SettingsPage() {
           )}
 
           {activeTab === "account" && (
-            <Card className="p-6 space-y-6">
-              <h3 className="text-lg font-bold text-slate-800">Personal Information</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Full Name</label>
-                  <p className="text-slate-800 font-bold">{user?.firstName} {user?.lastName}</p>
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Email Address</label>
-                  <p className="text-slate-800 font-bold">{user?.email}</p>
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Role</label>
-                  <div className="flex items-center gap-2">
-                    <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
-                    <p className="text-slate-800 font-bold">{user?.role?.replace("_", " ")}</p>
+            <div className="space-y-6">
+              <Card className="p-6 space-y-6">
+                <h3 className="text-lg font-bold text-slate-800">Personal Information</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Full Name</label>
+                    <p className="text-slate-800 font-bold">{user?.firstName} {user?.lastName}</p>
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Email Address</label>
+                    <p className="text-slate-800 font-bold">{user?.email}</p>
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Role</label>
+                    <div className="flex items-center gap-2">
+                      <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+                      <p className="text-slate-800 font-bold">{user?.role?.replace("_", " ")}</p>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </Card>
+              </Card>
+
+              {/* Change Password Card */}
+              <Card className="p-6 space-y-6">
+                <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+                  <div>
+                    <h3 className="text-lg font-bold text-slate-800">Change Password</h3>
+                    <p className="text-slate-500 text-xs mt-0.5">Ensure your account is using a long, random password to stay secure.</p>
+                  </div>
+                </div>
+
+                {passError && (
+                  <div className="p-3 bg-rose-50 border border-rose-200 text-rose-700 text-xs rounded-xl font-medium">
+                    {passError}
+                  </div>
+                )}
+                {passSuccess && (
+                  <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs rounded-xl font-medium">
+                    {passSuccess}
+                  </div>
+                )}
+
+                <form onSubmit={handleChangePassword} className="space-y-4 max-w-lg">
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Current Password</label>
+                    <input
+                      type="password"
+                      value={currentPassword}
+                      onChange={(e) => setCurrentPassword(e.target.value)}
+                      required
+                      placeholder="••••••••"
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-800 outline-none focus:border-blue-500 transition-all"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">New Password</label>
+                      <input
+                        type="password"
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        required
+                        placeholder="Min 6 characters"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-800 outline-none focus:border-blue-500 transition-all"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Confirm New Password</label>
+                      <input
+                        type="password"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        required
+                        placeholder="Confirm new password"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-800 outline-none focus:border-blue-500 transition-all"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="pt-2">
+                    <Button variant="primary" size="sm" type="submit" disabled={passLoading}>
+                      {passLoading ? "Updating..." : "Update Password"}
+                    </Button>
+                  </div>
+                </form>
+              </Card>
+            </div>
           )}
 
           {activeTab === "billing" && (

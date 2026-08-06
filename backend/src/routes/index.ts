@@ -55,10 +55,11 @@ router.post("/auth/reset-password",  validate(authValidation.resetPassword),  (r
 router.post("/auth/refresh",         validate(authValidation.refresh),        (req: Request, res: Response, next: NextFunction) => authController.refresh(req as AuthRequest, res, next));
 
 // ── Auth (protected) ──────────────────────────────────────────
-router.post("/auth/logout",  authenticate, (req: Request, res: Response, next: NextFunction) => authController.logout(req as AuthRequest, res, next));
-router.get("/auth/profile",  authenticate, (req: Request, res: Response, next: NextFunction) => authController.profile(req as AuthRequest, res, next));
-router.post("/business/upgrade", authenticate, (req: Request, res: Response, next: NextFunction) => businessController.upgrade(req as AuthRequest, res, next));
-router.put("/business", authenticate, (req: Request, res: Response, next: NextFunction) => businessController.update(req as AuthRequest, res, next));
+router.post("/auth/logout",          authenticate, (req: Request, res: Response, next: NextFunction) => authController.logout(req as AuthRequest, res, next));
+router.get("/auth/profile",          authenticate, (req: Request, res: Response, next: NextFunction) => authController.profile(req as AuthRequest, res, next));
+router.post("/auth/change-password", authenticate, validate(authValidation.changePassword), (req: Request, res: Response, next: NextFunction) => authController.changePassword(req as AuthRequest, res, next));
+router.post("/business/upgrade",     authenticate, (req: Request, res: Response, next: NextFunction) => businessController.upgrade(req as AuthRequest, res, next));
+router.put("/business",              authenticate, (req: Request, res: Response, next: NextFunction) => businessController.update(req as AuthRequest, res, next));
 
 // ── Dashboard ─────────────────────────────────────────────────
 router.get("/dashboard",         ...businessGuard, (req: Request, res: Response, next: NextFunction) => dashboardController.overview(req as AuthRequest, res, next));

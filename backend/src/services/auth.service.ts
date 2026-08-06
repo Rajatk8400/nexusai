@@ -219,6 +219,20 @@ export class AuthService {
     return { success: true, message: "Password updated successfully. Please log in with your new password." };
   }
 
+  async changePassword(userId: string, currentPassword: string, newPassword: string) {
+    const user = await User.findById(userId);
+    if (!user) throw new AppError("User not found", 404);
+
+    const valid = await bcrypt.compare(currentPassword, user.passwordHash);
+    if (!valid) throw new AppError("Incorrect current password", 400);
+
+    const passwordHash = await bcrypt.hash(newPassword, 12);
+    await User.findByIdAndUpdate(userId, { passwordHash });
+
+    log.info("Password changed by user", { userId });
+    return { success: true, message: "Password updated successfully" };
+  }
+
   async refreshTokens(token: string) {
     let payload: RefreshTokenPayload;
     try {
