@@ -1,13 +1,27 @@
-import { Customer, CustomerTransaction, ICustomer, ICustomerTransaction } from "../models";
+import mongoose, { FilterQuery } from "mongoose";
+import { Customer, CustomerTransaction, ICustomer, ICustomerTransaction, CreditScore, ICreditScore } from "../models";
 import { AppError } from "../utils/AppError";
-import mongoose from "mongoose";
+
+export interface CustomerQuery {
+  page?: number | string;
+  limit?: number | string;
+  search?: string;
+}
+
+export interface CustomerListResult {
+  items: ICustomer[];
+  total: number;
+  page: number;
+  limit: number;
+  pages: number;
+}
 
 export class CustomerService {
-  async list(businessId: string, query: any): Promise<any> {
+  async list(businessId: string, query: CustomerQuery): Promise<CustomerListResult> {
     const p = Number(query.page || 1);
     const l = Number(query.limit || 20);
     const { search } = query;
-    const filter: any = { businessId, deletedAt: null };
+    const filter: FilterQuery<ICustomer> = { businessId, deletedAt: null };
     
     if (search) {
       filter.$or = [
@@ -17,7 +31,7 @@ export class CustomerService {
     }
 
     const [items, total] = await Promise.all([
-      Customer.find(filter).sort({ name: 1 }).skip((p - 1) * l).limit(l).lean(),
+      Customer.find(filter).sort({ name: 1 }).skip((p - 1) * l).limit(l).lean() as unknown as ICustomer[],
       Customer.countDocuments(filter),
     ]);
 
@@ -97,10 +111,9 @@ export class CustomerService {
     return txs as unknown as ICustomerTransaction[];
   }
 
-  async getTrustScore(businessId: string, customerId: string): Promise<any> {
-    const { CreditScore } = require("../models/credit_score.model");
+  async getTrustScore(businessId: string, customerId: string): Promise<ICreditScore | null> {
     const score = await CreditScore.findOne({ businessId, customerId }).lean();
-    return score;
+    return score as unknown as ICreditScore | null;
   }
 }
 

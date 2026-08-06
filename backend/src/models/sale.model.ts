@@ -4,6 +4,7 @@ export interface ISaleItem {
   productId: string;
   productName: string;
   sku: string;
+  hsnCode?: string;
   quantity: number;
   unitPrice: number;
   costPrice: number;
@@ -59,6 +60,7 @@ const SaleItemSchema = new Schema<ISaleItem>({
   productId: { type: String, required: true },
   productName: { type: String, required: true },
   sku: { type: String, required: true },
+  hsnCode: { type: String },
   quantity: { type: Number, required: true },
   unitPrice: { type: Number, required: true },
   costPrice: { type: Number, required: true },

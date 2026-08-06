@@ -1,5 +1,24 @@
-import { Customer } from "../models";
-import { AppError } from "../utils/AppError";
+import { FilterQuery } from "mongoose";
+import { Customer, ICustomer } from "../models";
+
+export interface SendCampaignInput {
+  template: string;
+  segment: "ALL" | "DUE";
+  channel: "WHATSAPP" | "SMS";
+}
+
+export interface CampaignTargetResult {
+  customerName: string;
+  phone?: string;
+  link: string;
+  status: string;
+}
+
+export interface SendCampaignResult {
+  campaignId: string;
+  targetCount: number;
+  results: CampaignTargetResult[];
+}
 
 export class CampaignService {
   async getStats(businessId: string) {
@@ -13,20 +32,19 @@ export class CampaignService {
     };
   }
 
-  async sendCampaign(businessId: string, data: { template: string, segment: "ALL" | "DUE", channel: "WHATSAPP" | "SMS" }) {
-    const filter: any = { businessId, deletedAt: null };
+  async sendCampaign(businessId: string, data: SendCampaignInput): Promise<SendCampaignResult> {
+    const filter: FilterQuery<ICustomer> = { businessId, deletedAt: null };
     if (data.segment === "DUE") {
       filter.balance = { $gt: 0 };
     }
 
     const customers = await Customer.find(filter).select("name phone balance").lean();
     
-    const results = customers.map(c => {
-      let message = data.template
+    const results: CampaignTargetResult[] = customers.map((c) => {
+      const message = data.template
         .replace(/{name}/g, c.name)
-        .replace(/{balance}/g, c.balance.toString());
+        .replace(/{balance}/g, (c.balance ?? 0).toString());
       
-      // For WhatsApp, we generate the link
       const phone = c.phone?.replace(/\D/g, "");
       const finalPhone = phone?.length === 10 ? `91${phone}` : phone;
       const link = `https://wa.me/${finalPhone}?text=${encodeURIComponent(message)}`;

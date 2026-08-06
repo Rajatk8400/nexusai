@@ -1,12 +1,19 @@
-import mongoose from "mongoose";
-import { Sale, Product, Inventory, InventoryMovement, ISale, Customer } from "../models";
+import mongoose, { FilterQuery } from "mongoose";
+import { Sale, Product, Inventory, InventoryMovement, ISale, ISaleItem } from "../models";
 import { AppError } from "../utils/AppError";
 import { createLogger } from "../config/logger";
 import { customerService } from "./customer.service";
 
 const log = createLogger("SaleService");
 
-function calcGST(amount: number, taxRate: number, isInterState: boolean) {
+export interface GSTCalculation {
+  cgst: number;
+  sgst: number;
+  igst: number;
+  total: number;
+}
+
+function calcGST(amount: number, taxRate: number, isInterState: boolean): GSTCalculation {
   const taxAmount = (amount * taxRate) / 100;
   if (isInterState) return { cgst: 0, sgst: 0, igst: taxAmount, total: taxAmount };
   return { cgst: taxAmount / 2, sgst: taxAmount / 2, igst: 0, total: taxAmount };
@@ -18,29 +25,64 @@ async function nextInvoiceNumber(businessId: string): Promise<string> {
   return `INV-${year}-${(count + 1).toString().padStart(5, "0")}`;
 }
 
+export interface SaleItemInput {
+  productId: string;
+  quantity: number;
+  unitPrice?: number;
+  discountAmt?: number;
+}
+
+export interface CreateSaleInput {
+  items: SaleItemInput[];
+  customerName?: string;
+  customerPhone?: string;
+  customerGst?: string;
+  paymentMethod?: string;
+  notes?: string;
+  saleDateAt?: Date;
+  isInterState?: boolean;
+  includeGST?: boolean;
+  amountPaid?: number;
+}
+
+export interface SaleQuery {
+  branchId?: string;
+  status?: string;
+  paymentMethod?: string;
+  from?: string;
+  to?: string;
+  page?: number | string;
+  limit?: number | string;
+}
+
+export interface EwayBillInput {
+  ewayBillNumber?: string;
+  transporterName?: string;
+  transporterId?: string;
+  vehicleNumber?: string;
+  distance?: number;
+  supplyType?: string;
+}
+
+export interface SaleListResult {
+  items: ISale[];
+  total: number;
+  page: number;
+  limit: number;
+  pages: number;
+}
+
 export class SaleService {
   async create(
     businessId: string,
     branchId: string,
     createdById: string,
-    data: {
-      items: { productId: string; quantity: number; unitPrice?: number; discountAmt?: number }[];
-      customerName?: string;
-      customerPhone?: string;
-      customerGst?: string;
-      paymentMethod?: string;
-      notes?: string;
-      saleDateAt?: Date;
-      isInterState?: boolean;
-      includeGST?: boolean;
-      amountPaid?: number;
-    }
-  ) {
+    data: CreateSaleInput
+  ): Promise<ISale> {
     const session = await mongoose.startSession();
     session.startTransaction();
 
     try {
-      // Resolve products
       const productIds = data.items.map((i) => i.productId);
       const products = await Product.find({ _id: { $in: productIds }, businessId, deletedAt: null }).session(session);
       const productMap = new Map(products.map((p) => [p._id.toString(), p]));
@@ -50,7 +92,7 @@ export class SaleService {
       let totalTax = 0;
       let totalProfit = 0;
       let cgst = 0, sgst = 0, igst = 0;
-      const saleItems: any[] = [];
+      const saleItems: ISaleItem[] = [];
 
       for (const item of data.items) {
         const product = productMap.get(item.productId);
@@ -77,17 +119,17 @@ export class SaleService {
           productId: item.productId,
           productName: product.name,
           sku: product.sku,
+          hsnCode: product.hsnCode,
           quantity: item.quantity,
           unitPrice,
           costPrice: product.costPrice,
           discountAmt,
-          taxRate: taxRate,
+          taxRate,
           taxAmount: gstCalc.total,
           totalAmount: lineTotal,
           profitAmount: profit,
         });
 
-        // Deduct inventory
         const inv = await Inventory.findOne({ businessId, branchId, productId: item.productId }).session(session);
         if (!inv) throw new AppError(`No inventory record for product ${product.name}`, 400);
         if (inv.quantityAvailable < item.quantity) {
@@ -114,15 +156,14 @@ export class SaleService {
 
       const invoiceNumber = await nextInvoiceNumber(businessId);
       const grandTotal = Math.round((subtotal + totalTax) * 100) / 100;
-      let amountPaid = data.amountPaid !== undefined ? data.amountPaid : grandTotal;
-      let balanceDue = grandTotal - amountPaid;
+      const amountPaid = data.amountPaid !== undefined ? data.amountPaid : grandTotal;
+      const balanceDue = grandTotal - amountPaid;
 
       let paymentStatus: "PENDING" | "COMPLETED" | "PARTIAL" = "COMPLETED";
       if (balanceDue > 0 && amountPaid > 0) paymentStatus = "PARTIAL";
       if (amountPaid === 0) paymentStatus = "PENDING";
 
-      // Handle Customer & Khata
-      let customerId = null;
+      let customerId: string | undefined = undefined;
       if (balanceDue > 0 && !data.customerPhone && !data.customerName) {
          throw new AppError("Customer name or phone is required for Udhar (Credit) sales", 400);
       }
@@ -135,7 +176,6 @@ export class SaleService {
         });
         customerId = customer?._id.toString();
         
-        // Always record the full sale in the ledger
         if (balanceDue > 0 || data.paymentMethod === "CREDIT") {
            await customerService.recordTransaction(
              businessId, 
@@ -147,7 +187,6 @@ export class SaleService {
              data.paymentMethod || "CREDIT"
            );
 
-           // If there is a down payment, record it immediately as a payment
            if (amountPaid > 0) {
              await customerService.recordTransaction(
                businessId, 
@@ -200,15 +239,15 @@ export class SaleService {
     }
   }
 
-  async list(businessId: string, query: {
-    branchId?: string; status?: string; paymentMethod?: string;
-    from?: string; to?: string; page?: number; limit?: number;
-  }): Promise<any> {
+  async list(businessId: string, query: SaleQuery): Promise<SaleListResult> {
     const { branchId, status, paymentMethod, from, to, page = 1, limit = 20 } = query;
-    const filter: any = { businessId, deletedAt: null };
+    const pageNum = Number(page) || 1;
+    const limitNum = Number(limit) || 20;
+
+    const filter: FilterQuery<ISale> = { businessId, deletedAt: null };
     if (branchId) filter.branchId = branchId;
-    if (status) filter.status = status;
-    if (paymentMethod) filter.paymentMethod = paymentMethod;
+    if (status) filter.status = status as ISale["status"];
+    if (paymentMethod) filter.paymentMethod = paymentMethod as ISale["paymentMethod"];
     if (from || to) {
       filter.saleDateAt = {};
       if (from) filter.saleDateAt.$gte = new Date(from);
@@ -216,17 +255,17 @@ export class SaleService {
     }
 
     const [items, total] = await Promise.all([
-      Sale.find(filter).sort({ saleDateAt: -1 }).skip((page - 1) * limit).limit(limit).lean(),
+      Sale.find(filter).sort({ saleDateAt: -1 }).skip((pageNum - 1) * limitNum).limit(limitNum).lean() as unknown as ISale[],
       Sale.countDocuments(filter),
     ]);
 
-    return { items, total, page, limit, pages: Math.ceil(total / limit) };
+    return { items, total, page: pageNum, limit: limitNum, pages: Math.ceil(total / limitNum) };
   }
 
-  async getById(id: string, businessId: string): Promise<any> {
+  async getById(id: string, businessId: string): Promise<ISale> {
     const sale = await Sale.findOne({ _id: id, businessId, deletedAt: null }).lean();
     if (!sale) throw new AppError("Sale not found", 404);
-    return sale;
+    return sale as unknown as ISale;
   }
 
   async getRevenueChart(businessId: string, months = 7, branchId?: string) {
@@ -236,7 +275,7 @@ export class SaleService {
       const start = new Date(now.getFullYear(), now.getMonth() - i, 1);
       const end = new Date(now.getFullYear(), now.getMonth() - i + 1, 0, 23, 59, 59);
 
-      const filter: any = {
+      const filter: FilterQuery<ISale> = {
         businessId,
         deletedAt: null,
         status: { $nin: ["CANCELLED", "REFUNDED"] },
@@ -279,7 +318,7 @@ export class SaleService {
     const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
     const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
 
-    const filter: any = {
+    const filter: FilterQuery<ISale> = {
       businessId, deletedAt: null,
       status: { $nin: ["CANCELLED", "REFUNDED"] },
     };
@@ -320,11 +359,11 @@ export class SaleService {
     };
   }
 
-  async getPendingInvoicesCount(businessId: string) {
+  async getPendingInvoicesCount(businessId: string): Promise<number> {
     return await Sale.countDocuments({ businessId, paymentStatus: "PENDING", deletedAt: null });
   }
 
-  async updateEwayBill(businessId: string, saleId: string, ewayData: any) {
+  async updateEwayBill(businessId: string, saleId: string, ewayData: EwayBillInput): Promise<ISale> {
     const sale = await Sale.findOne({ _id: saleId, businessId, deletedAt: null });
     if (!sale) throw new AppError("Sale not found", 404);
     
@@ -340,6 +379,7 @@ export class SaleService {
     await sale.save();
     return sale;
   }
+
   async getPaymentMix(businessId: string) {
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
@@ -356,7 +396,7 @@ export class SaleService {
       CASH: "#3b82f6", UPI: "#10b981", CARD: "#8b5cf6", CREDIT: "#f59e0b"
     };
 
-    return agg.map(item => ({
+    return agg.map((item) => ({
       name: item._id || "Unknown",
       value: Math.round((item.count / total) * 100),
       color: colors[item._id] || "#94a3b8"

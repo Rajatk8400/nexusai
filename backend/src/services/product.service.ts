@@ -1,16 +1,62 @@
-import { Product, Inventory, IProduct } from "../models";
+import { PipelineStage, FilterQuery } from "mongoose";
+import { Product, Inventory, IProduct, IInventory } from "../models";
 import { AppError } from "../utils/AppError";
 import { createLogger } from "../config/logger";
 
 const log = createLogger("ProductService");
 
+export interface ProductQuery {
+  status?: string;
+  category?: string;
+  search?: string;
+  page?: number | string;
+  limit?: number | string;
+}
+
+export interface CreateProductInput extends Partial<IProduct> {
+  initialStock?: number;
+  reorderLevel?: number;
+  reorderQuantity?: number;
+}
+
+export interface StockValueItem {
+  productId: string;
+  name: string;
+  sku: string;
+  quantityOnHand: number;
+  averageCost: number;
+  sellingPrice: number;
+  stockValue: number;
+  retailValue: number;
+  isLowStock: boolean;
+}
+
+export interface StockValueReportResult {
+  totalStockValue: number;
+  totalRetailValue: number;
+  potentialProfit: number;
+  lowStockCount: number;
+  totalProducts: number;
+  items: StockValueItem[];
+}
+
+export interface ProductListResult {
+  items: unknown[];
+  total: number;
+  page: number;
+  limit: number;
+  pages: number;
+}
+
 export class ProductService {
-  async list(businessId: string, query: { status?: string; category?: string; search?: string; page?: number; limit?: number }): Promise<any> {
+  async list(businessId: string, query: ProductQuery): Promise<ProductListResult> {
     const { status, category, search, page = 1, limit = 50 } = query;
-    const skip = (Number(page) - 1) * Number(limit);
+    const pageNum = Number(page) || 1;
+    const limitNum = Number(limit) || 50;
+    const skip = (pageNum - 1) * limitNum;
     
-    const match: any = { businessId, deletedAt: null };
-    if (status) match.status = status;
+    const match: FilterQuery<IProduct> = { businessId, deletedAt: null };
+    if (status) match.status = status as IProduct["status"];
     if (category) match.category = category;
     if (search) {
       match.$or = [
@@ -19,11 +65,11 @@ export class ProductService {
       ];
     }
 
-    const pipeline = [
+    const pipeline: PipelineStage[] = [
       { $match: match },
-      { $sort: { name: 1 } as any },
+      { $sort: { name: 1 } },
       { $skip: skip },
-      { $limit: Number(limit) },
+      { $limit: limitNum },
       {
         $addFields: {
           idString: { $toString: "$_id" }
@@ -44,20 +90,18 @@ export class ProductService {
       Product.countDocuments(match),
     ]);
 
-    return { items, total, page: Number(page), limit: Number(limit), pages: Math.ceil(total / Number(limit)) };
+    return { items, total, page: pageNum, limit: limitNum, pages: Math.ceil(total / limitNum) };
   }
 
-  async getById(id: string, businessId: string): Promise<any> {
+  async getById(id: string, businessId: string): Promise<Record<string, unknown>> {
     const p = await Product.findOne({ _id: id, businessId, deletedAt: null }).lean();
     if (!p) throw new AppError("Product not found", 404);
     
-    // Add inventory
     const inventories = await Inventory.find({ productId: id, businessId }).lean();
     return { ...p, inventories };
   }
 
-  async create(businessId: string, data: any, branchId?: string) {
-    // Auto-generate SKU if not provided
+  async create(businessId: string, data: CreateProductInput, branchId?: string): Promise<IProduct> {
     if (!data.sku) {
       const count = await Product.countDocuments({ businessId });
       data.sku = `SKU-${(count + 1).toString().padStart(4, "0")}`;
@@ -69,7 +113,6 @@ export class ProductService {
     const product = await Product.create({ ...data, businessId });
     log.info("Product created", { productId: product._id, businessId });
 
-    // Create inventory record for the branch
     if (branchId) {
       const initialQty = Number(data.initialStock || 0);
       await Inventory.create({
@@ -88,7 +131,7 @@ export class ProductService {
     return product;
   }
 
-  async update(id: string, businessId: string, data: Partial<IProduct>) {
+  async update(id: string, businessId: string, data: Partial<IProduct>): Promise<IProduct> {
     if (data.sku) {
       const existing = await Product.findOne({
         businessId,
@@ -109,7 +152,7 @@ export class ProductService {
     return product;
   }
 
-  async delete(id: string, businessId: string) {
+  async delete(id: string, businessId: string): Promise<{ success: boolean }> {
     const product = await Product.findOneAndUpdate(
       { _id: id, businessId, deletedAt: null },
       { $set: { deletedAt: new Date(), status: "INACTIVE" } },
@@ -120,9 +163,9 @@ export class ProductService {
     return { success: true };
   }
 
-  async stockValueReport(businessId: string, branchId?: string) {
-    const productFilter: any = { businessId, deletedAt: null, status: "ACTIVE" };
-    const inventoryFilter: any = { businessId };
+  async stockValueReport(businessId: string, branchId?: string): Promise<StockValueReportResult> {
+    const productFilter: FilterQuery<IProduct> = { businessId, deletedAt: null, status: "ACTIVE" };
+    const inventoryFilter: FilterQuery<IInventory> = { businessId };
     if (branchId) inventoryFilter.branchId = branchId;
 
     const [products, inventories] = await Promise.all([
@@ -135,7 +178,7 @@ export class ProductService {
     let totalStockValue = 0;
     let totalRetailValue = 0;
     let lowStockCount = 0;
-    const items: any[] = [];
+    const items: StockValueItem[] = [];
 
     for (const p of products) {
       const inv = invMap.get(p._id.toString());

@@ -1,18 +1,18 @@
 import { Response, NextFunction } from "express";
-import { Business, User } from "../models";
+import { Business } from "../models";
 import { sendSuccess } from "../utils/response";
 import { AuthRequest } from "../middlewares/auth.middleware";
 import { AppError } from "../utils/AppError";
 
+type BusinessPlan = "TRIAL" | "SIX_MONTHS" | "YEARLY";
+
 export const adminController = {
-  async getStats(req: AuthRequest, res: Response, next: NextFunction) {
+  async getStats(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      if (req.user!.role !== "SUPER_ADMIN") {
-        console.log("Admin Access Denied: User role is", req.user!.role);
+      if (req.user?.role !== "SUPER_ADMIN") {
         throw new AppError("Unauthorized", 403);
       }
 
-      console.log("Admin Access Granted: Fetching stats...");
       const totalBusinesses = await Business.countDocuments();
       const pendingUpgrades = await Business.countDocuments({ planStatus: "PENDING_UPGRADE" });
       const activePlans = await Business.countDocuments({ planStatus: "ACTIVE" });
@@ -27,14 +27,14 @@ export const adminController = {
     } catch (e) { next(e); }
   },
 
-  async getBusinesses(req: AuthRequest, res: Response, next: NextFunction) {
+  async getBusinesses(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      if (req.user!.role !== "SUPER_ADMIN") {
+      if (req.user?.role !== "SUPER_ADMIN") {
         throw new AppError("Unauthorized", 403);
       }
 
       const { search } = req.query;
-      let query = {};
+      let query: Record<string, unknown> = {};
       
       if (search) {
         const s = String(search);
@@ -49,15 +49,15 @@ export const adminController = {
 
       const businesses = await Business.find(query)
         .sort({ createdAt: -1 })
-        .select("-settings"); // Exclude heavy settings object
+        .select("-settings");
 
       sendSuccess(res, businesses, "Businesses fetched");
     } catch (e) { next(e); }
   },
 
-  async approveUpgrade(req: AuthRequest, res: Response, next: NextFunction) {
+  async approveUpgrade(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      if (req.user!.role !== "SUPER_ADMIN") {
+      if (req.user?.role !== "SUPER_ADMIN") {
         throw new AppError("Unauthorized", 403);
       }
 
@@ -69,7 +69,7 @@ export const adminController = {
         throw new AppError("No pending upgrade or transaction found", 400);
       }
 
-      const planId = business.pendingPlanId || business.plan;
+      const planId = (business.pendingPlanId || business.plan) as BusinessPlan;
       let durationMonths = 0;
       if (planId === "SIX_MONTHS") durationMonths = 6;
       else if (planId === "YEARLY") durationMonths = 12;
@@ -79,7 +79,7 @@ export const adminController = {
       const expiresAt = new Date();
       expiresAt.setMonth(expiresAt.getMonth() + durationMonths);
 
-      business.plan = planId as any;
+      business.plan = planId;
       business.planExpiresAt = expiresAt;
       business.planStatus = "ACTIVE";
       business.pendingPlanId = undefined;
@@ -90,9 +90,9 @@ export const adminController = {
     } catch (e) { next(e); }
   },
 
-  async updatePlan(req: AuthRequest, res: Response, next: NextFunction) {
+  async updatePlan(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      if (req.user!.role !== "SUPER_ADMIN") {
+      if (req.user?.role !== "SUPER_ADMIN") {
         throw new AppError("Unauthorized", 403);
       }
 
@@ -101,7 +101,7 @@ export const adminController = {
       
       if (!business) throw new AppError("Business not found", 404);
 
-      if (plan) business.plan = plan;
+      if (plan) business.plan = plan as BusinessPlan;
       if (planStatus) business.planStatus = planStatus;
       if (planExpiresAt) business.planExpiresAt = new Date(planExpiresAt);
       if (status) business.status = status;

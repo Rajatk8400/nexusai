@@ -5,7 +5,7 @@ import { AuthRequest } from "../middlewares/auth.middleware";
 import { AppError } from "../utils/AppError";
 
 export const documentController = {
-  async upload(req: AuthRequest, res: Response, next: NextFunction) {
+  async upload(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       if (!req.file) throw new AppError("No file uploaded", 400);
       const { type } = req.body;
@@ -14,7 +14,7 @@ export const documentController = {
     } catch (e) { next(e); }
   },
 
-  async list(req: AuthRequest, res: Response, next: NextFunction) {
+  async list(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const { type } = req.query;
       const docs = await documentService.listDocuments(req.user!.businessId!, type as string);
@@ -22,7 +22,7 @@ export const documentController = {
     } catch (e) { next(e); }
   },
 
-  async sendToCa(req: AuthRequest, res: Response, next: NextFunction) {
+  async sendToCa(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const { documentIds } = req.body;
       if (!Array.isArray(documentIds)) throw new AppError("documentIds must be an array", 400);
@@ -31,10 +31,10 @@ export const documentController = {
     } catch (e) { next(e); }
   },
 
-  async delete(req: AuthRequest, res: Response, next: NextFunction) {
+  async delete(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const { id } = req.params;
-      await documentService.deleteDocument(req.user!.businessId!, id);
+      await documentService.deleteDocument(req.user!.businessId!, id!);
       sendSuccess(res, { success: true });
     } catch (e) { next(e); }
   }

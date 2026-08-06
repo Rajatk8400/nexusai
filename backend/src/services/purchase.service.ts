@@ -1,19 +1,41 @@
 import mongoose from "mongoose";
-import { Purchase, Product, Inventory, InventoryMovement, IPurchase } from "../models";
+import { Purchase, Product, Inventory, InventoryMovement, IPurchase, IPurchaseItem } from "../models";
 import { AppError } from "../utils/AppError";
+
+export interface PurchaseItemInput {
+  productId: string;
+  quantity: number;
+  unitCost: number;
+  taxRate?: number;
+}
+
+export interface CreatePurchaseInput {
+  supplierId: string;
+  purchaseNumber: string;
+  purchaseDateAt?: Date;
+  items: PurchaseItemInput[];
+  notes?: string;
+}
+
+export interface PurchaseQuery {
+  page?: number | string;
+  limit?: number | string;
+}
+
+export interface PurchaseListResult {
+  items: IPurchase[];
+  total: number;
+  page: number;
+  limit: number;
+  pages: number;
+}
 
 export class PurchaseService {
   async create(
     businessId: string,
     branchId: string,
     createdById: string,
-    data: {
-      supplierId: string;
-      purchaseNumber: string;
-      purchaseDateAt?: Date;
-      items: { productId: string; quantity: number; unitCost: number; taxRate?: number }[];
-      notes?: string;
-    }
+    data: CreatePurchaseInput
   ): Promise<IPurchase> {
     const session = await mongoose.startSession();
     session.startTransaction();
@@ -25,7 +47,7 @@ export class PurchaseService {
 
       let subtotal = 0;
       let totalTax = 0;
-      const purchaseItems: any[] = [];
+      const purchaseItems: IPurchaseItem[] = [];
 
       for (const item of data.items) {
         const product = productMap.get(item.productId);
@@ -49,7 +71,6 @@ export class PurchaseService {
           totalAmount: lineTotal,
         });
 
-        // Update Inventory & Average Cost
         let inv = await Inventory.findOne({ businessId, branchId, productId: item.productId }).session(session);
         if (!inv) {
           inv = new Inventory({
@@ -68,7 +89,6 @@ export class PurchaseService {
 
         await inv.save({ session });
 
-        // Update Product's last cost price
         product.costPrice = item.unitCost;
         await product.save({ session });
 
@@ -109,11 +129,11 @@ export class PurchaseService {
     }
   }
 
-  async list(businessId: string, query: any): Promise<any> {
+  async list(businessId: string, query: PurchaseQuery): Promise<PurchaseListResult> {
     const p = Number(query.page || 1);
     const l = Number(query.limit || 20);
     const [items, total] = await Promise.all([
-      Purchase.find({ businessId }).sort({ purchaseDateAt: -1 }).skip((p - 1) * l).limit(l).lean(),
+      Purchase.find({ businessId }).sort({ purchaseDateAt: -1 }).skip((p - 1) * l).limit(l).lean() as unknown as IPurchase[],
       Purchase.countDocuments({ businessId }),
     ]);
     return { items, total, page: p, limit: l, pages: Math.ceil(total / l) };

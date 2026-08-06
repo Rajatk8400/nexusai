@@ -1,20 +1,34 @@
-import { Customer, CustomerTransaction, CreditScore } from "../models";
+import { Customer, CustomerTransaction, CreditScore, ICustomer, ICustomerTransaction } from "../models";
 import { AppError } from "../utils/AppError";
 import { createLogger } from "../config/logger";
 
 const log = createLogger("KhataService");
 
+export interface RecordKhataTransactionInput {
+  type: "SALE" | "UDHAR" | "PAYMENT" | "RETURN" | "ADJUSTMENT";
+  amount: number;
+  notes?: string;
+  referenceId?: string;
+  paymentMethod?: string;
+}
+
+export interface KhataTransactionResult {
+  transaction: ICustomerTransaction;
+  customer: ICustomer;
+}
+
 export class KhataService {
-  async recordTransaction(businessId: string, customerId: string, data: any) {
+  async recordTransaction(
+    businessId: string, 
+    customerId: string, 
+    data: RecordKhataTransactionInput
+  ): Promise<KhataTransactionResult> {
     const customer = await Customer.findOne({ _id: customerId, businessId, deletedAt: null });
     if (!customer) throw new AppError("Customer not found", 404);
 
     const balanceBefore = customer.balance;
     let balanceAfter = balanceBefore;
 
-    // Logic: 
-    // SALE or UDHAR increases balance (Customer owes us more)
-    // PAYMENT or RETURN decreases balance (Customer owes us less)
     if (data.type === "SALE" || data.type === "UDHAR") {
       balanceAfter += data.amount;
       customer.totalCredit += data.amount;
@@ -22,7 +36,7 @@ export class KhataService {
       balanceAfter -= data.amount;
       customer.totalDebit += data.amount;
     } else if (data.type === "ADJUSTMENT") {
-      balanceAfter = data.amount; // Direct balance set for adjustments
+      balanceAfter = data.amount;
     }
 
     const transaction = await CustomerTransaction.create({
@@ -36,7 +50,6 @@ export class KhataService {
     customer.balance = balanceAfter;
     customer.lastTransactionAt = new Date();
     
-    // Auto-update risk status
     if (customer.balance <= 0) {
       customer.riskStatus = "CLEAR";
     } else if (customer.balance > customer.creditLimit && customer.creditLimit > 0) {
@@ -47,30 +60,30 @@ export class KhataService {
 
     await customer.save();
     
-    // Trigger AI Score Calculation (Async)
-    this.calculateTrustScore(businessId, customerId).catch(err => log.error("Score calculation failed", err));
+    this.calculateTrustScore(businessId, customerId).catch((err) => {
+      const errMsg = err instanceof Error ? err.message : String(err);
+      log.error("Score calculation failed", { error: errMsg });
+    });
 
     return { transaction, customer };
   }
 
-  async calculateTrustScore(businessId: string, customerId: string) {
+  async calculateTrustScore(businessId: string, customerId: string): Promise<void> {
     const transactions = await CustomerTransaction.find({ businessId, customerId }).sort({ createdAt: -1 }).limit(50).lean();
     const customer = await Customer.findById(customerId);
     if (!customer) return;
 
-    let score = 700; // Base score
-    const insights = [];
+    let score = 700;
+    const insights: string[] = [];
 
-    // 1. Payment Punctuality (Mock logic for demonstration)
-    const payments = transactions.filter(t => t.type === "PAYMENT");
-    const sales = transactions.filter(t => t.type === "SALE" || t.type === "UDHAR");
+    const payments = transactions.filter((t) => t.type === "PAYMENT");
+    const sales = transactions.filter((t) => t.type === "SALE" || t.type === "UDHAR");
 
     if (payments.length > 0) {
       score += 50;
       insights.push("Regular payment history detected.");
     }
 
-    // 2. Outstanding Ratio
     if (customer.creditLimit > 0) {
       const ratio = customer.balance / customer.creditLimit;
       if (ratio > 0.8) {
@@ -82,7 +95,6 @@ export class KhataService {
       }
     }
 
-    // 3. Risk Level Mapping
     let riskLevel: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL" = "LOW";
     if (score < 400) riskLevel = "CRITICAL";
     else if (score < 600) riskLevel = "HIGH";
@@ -97,7 +109,7 @@ export class KhataService {
         lastCalculatedAt: new Date(),
         factors: {
           paymentPunctuality: payments.length / Math.max(sales.length, 1),
-          transactionFrequency: transactions.length / 30, // items per day roughly
+          transactionFrequency: transactions.length / 30,
           avgTicketSize: sales.reduce((acc, s) => acc + s.amount, 0) / Math.max(sales.length, 1),
           outstandingRatio: customer.creditLimit > 0 ? customer.balance / customer.creditLimit : 0
         }
@@ -108,7 +120,7 @@ export class KhataService {
     log.info("Trust score updated for customer", { customerId, score });
   }
 
-  async generateReminderTemplate(businessId: string, customerId: string, type: "FRIENDLY" | "URGENT") {
+  async generateReminderTemplate(businessId: string, customerId: string, type: "FRIENDLY" | "URGENT"): Promise<string> {
     const customer = await Customer.findById(customerId);
     if (!customer) throw new AppError("Customer not found", 404);
 

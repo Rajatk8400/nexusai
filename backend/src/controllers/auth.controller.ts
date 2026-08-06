@@ -4,14 +4,14 @@ import { sendSuccess, sendCreated } from "../utils/response";
 import { AuthRequest } from "../middlewares/auth.middleware";
 
 export const authController = {
-  async register(req: AuthRequest, res: Response, next: NextFunction) {
+  async register(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const result = await authService.register(req.body);
       sendCreated(res, result, "Account created successfully");
     } catch (e) { next(e); }
   },
 
-  async login(req: AuthRequest, res: Response, next: NextFunction) {
+  async login(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const { email, password } = req.body;
       const result = await authService.login(email, password);
@@ -19,7 +19,7 @@ export const authController = {
     } catch (e) { next(e); }
   },
 
-  async refresh(req: AuthRequest, res: Response, next: NextFunction) {
+  async refresh(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const { refreshToken } = req.body;
       const tokens = await authService.refreshTokens(refreshToken);
@@ -27,14 +27,14 @@ export const authController = {
     } catch (e) { next(e); }
   },
 
-  async logout(req: AuthRequest, res: Response, next: NextFunction) {
+  async logout(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       await authService.logout(req.user!.id);
       sendSuccess(res, null, "Logged out");
     } catch (e) { next(e); }
   },
 
-  async profile(req: AuthRequest, res: Response, next: NextFunction) {
+  async profile(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const user = await authService.getProfile(req.user!.id);
       sendSuccess(res, user);

@@ -8,14 +8,16 @@ import { sendSuccess } from "../utils/response";
 import { AuthRequest } from "../middlewares/auth.middleware";
 
 export const dashboardController = {
-  async overview(req: AuthRequest, res: Response, next: NextFunction) {
+  async overview(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const now = new Date();
+      const branchId = req.query["branchId"] as string | undefined;
+
       const [kpis, revenueChart, lowStock, stockValue, monthExpenses, purchaseKpis] = await Promise.all([
-        saleService.getDashboardKPIs(req.user!.businessId!, req.query["branchId"] as string),
-        saleService.getRevenueChart(req.user!.businessId!, 7, req.query["branchId"] as string),
-        inventoryService.getLowStock(req.user!.businessId!, req.query["branchId"] as string),
-        productService.stockValueReport(req.user!.businessId!, req.query["branchId"] as string),
+        saleService.getDashboardKPIs(req.user!.businessId!, branchId),
+        saleService.getRevenueChart(req.user!.businessId!, 7, branchId),
+        inventoryService.getLowStock(req.user!.businessId!, branchId),
+        productService.stockValueReport(req.user!.businessId!, branchId),
         expenseService.getTotalMonthlyExpenses(req.user!.businessId!, now.getMonth() + 1, now.getFullYear()),
         purchaseService.getPurchaseKPIs(req.user!.businessId!),
       ]);
@@ -29,7 +31,7 @@ export const dashboardController = {
         netProfit, 
         ...purchaseKpis,
         pendingInvoices,
-        healthScore: 0 // Real logic for health score will be implemented in next version
+        healthScore: 0
       };
       const paymentMix = await saleService.getPaymentMix(req.user!.businessId!);
 

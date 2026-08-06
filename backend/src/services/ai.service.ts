@@ -1,31 +1,27 @@
-import { Sale, Product, Inventory, ForecastResult, User } from "../models";
+import { Sale, Product, Inventory, ForecastResult, User, ISale, ISaleItem } from "../models";
 import { AppError } from "../utils/AppError";
 import { createLogger } from "../config/logger";
 
 const log = createLogger("AIService");
 
-// ── Statistical Forecasting Helpers ────────────────────────────────────────
-
-interface DailyData {
+export interface DailyData {
   date: string;
   dayOfWeek: number;
   value: number;
 }
 
-function groupDataByDay(sales: any[], valueExtractor: (sale: any) => number, startDate: Date, days: number): DailyData[] {
+function groupDataByDay(sales: ISale[], valueExtractor: (sale: ISale) => number, startDate: Date, days: number): DailyData[] {
   const result: Record<string, DailyData> = {};
   
-  // Initialize all days to 0
   for (let i = 0; i < days; i++) {
     const d = new Date(startDate);
     d.setDate(d.getDate() + i);
-    const dateStr = d.toISOString().split('T')[0];
+    const dateStr = d.toISOString().split("T")[0];
     result[dateStr] = { date: dateStr, dayOfWeek: d.getDay(), value: 0 };
   }
 
-  // Populate actual data
   for (const sale of sales) {
-    const dateStr = new Date(sale.saleDateAt).toISOString().split('T')[0];
+    const dateStr = new Date(sale.saleDateAt).toISOString().split("T")[0];
     if (result[dateStr]) {
       result[dateStr].value += valueExtractor(sale);
     }
@@ -69,7 +65,6 @@ function calculateSeasonality(data: DailyData[], globalAvg: number) {
     for (let i = 0; i < 7; i++) {
       if (dayCounts[i] > 0) {
         const dayAvg = daySums[i] / dayCounts[i];
-        // Cap multipliers between 0.3 (very slow day) and 2.5 (very busy day)
         multipliers[i] = Math.max(0.3, Math.min(2.5, dayAvg / globalAvg));
       }
     }
@@ -78,17 +73,36 @@ function calculateSeasonality(data: DailyData[], globalAvg: number) {
 }
 
 function calculateConfidenceScore(data: DailyData[], avg: number): number {
-  if (data.length === 0 || avg === 0) return 0.5; // Default low confidence if no data
+  if (data.length === 0 || avg === 0) return 0.5;
   const variance = data.reduce((acc, val) => acc + Math.pow(val.value - avg, 2), 0) / data.length;
   const stdDev = Math.sqrt(variance);
-  const cv = stdDev / avg; // Coefficient of Variation
+  const cv = stdDev / avg;
   
-  // If CV is 0 (constant sales), confidence is 0.95. If CV is > 1 (highly volatile), confidence drops.
-  let confidence = 0.95 - (cv * 0.3);
+  const confidence = 0.95 - (cv * 0.3);
   return Math.max(0.4, Math.min(0.95, confidence));
 }
 
-// ── Main Service ──────────────────────────────────────────────────────────
+export interface InventoryInsightItem {
+  productId: string;
+  productName: string;
+  sku: string;
+  currentStock: number;
+  dailyVelocity: string;
+  daysRemaining: number | string;
+  status: "CRITICAL" | "WARNING" | "HEALTHY" | "EXCESS";
+  recommendation: "REORDER_NOW" | "REORDER_SOON" | "STABLE";
+  suggestedOrder: number;
+}
+
+export interface StaffProductivityItem {
+  staffId: string;
+  staffName: string;
+  totalRevenue: number;
+  orderCount: number;
+  avgOrderValue: number;
+  profitGenerated: number;
+  efficiencyScore: number;
+}
 
 export class AIService {
   async generateDemandForecast(businessId: string, productId: string, days = 30) {
@@ -99,15 +113,15 @@ export class AIService {
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - historicalDays);
 
-    const sales = await Sale.find({
+    const sales = (await Sale.find({
       businessId,
       "items.productId": productId,
       status: "CONFIRMED",
       saleDateAt: { $gte: startDate }
-    }).lean();
+    }).lean()) as unknown as ISale[];
 
-    const valueExtractor = (sale: any) => {
-      const item = sale.items.find((i: any) => i.productId === productId);
+    const valueExtractor = (sale: ISale) => {
+      const item = sale.items?.find((i: ISaleItem) => i.productId === productId);
       return item?.quantity || 0;
     };
 
@@ -123,19 +137,16 @@ export class AIService {
       targetDate.setDate(targetDate.getDate() + i);
       const targetDayOfWeek = targetDate.getDay();
       
-      // y = mx + b (x is continuing from historical data, so x = historicalDays + i)
       const basePrediction = (slope * (historicalDays + i)) + intercept;
       
-      // Apply seasonality multiplier
       let quantity = basePrediction * multipliers[targetDayOfWeek];
       quantity = Math.max(0, Math.round(quantity * 100) / 100);
 
-      // Add a tiny bit of random noise (<= 5%) to represent natural real-world variation
       const noise = (Math.random() - 0.5) * 0.1 * quantity;
       quantity = Math.max(0, Math.round((quantity + noise) * 100) / 100);
 
       predictions.push({
-        date: targetDate.toISOString().split('T')[0],
+        date: targetDate.toISOString().split("T")[0],
         quantity,
         confidence: confidenceScore
       });
@@ -150,7 +161,7 @@ export class AIService {
       forecastStartAt: new Date(),
       forecastEndAt: predictions[predictions.length - 1].date,
       predictions,
-      accuracy: confidenceScore - 0.05, // Placeholder for historical accuracy vs forecast
+      accuracy: confidenceScore - 0.05,
       confidenceScore,
       processedAt: new Date()
     });
@@ -164,13 +175,13 @@ export class AIService {
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - historicalDays);
 
-    const sales = await Sale.find({
+    const sales = (await Sale.find({
       businessId,
       status: "CONFIRMED",
       saleDateAt: { $gte: startDate }
-    }).lean();
+    }).lean()) as unknown as ISale[];
 
-    const valueExtractor = (sale: any) => sale.totalAmount;
+    const valueExtractor = (sale: ISale) => sale.totalAmount;
     const dailyData = groupDataByDay(sales, valueExtractor, startDate, historicalDays);
     
     const { slope, intercept, avg } = calculateTrend(dailyData);
@@ -191,7 +202,7 @@ export class AIService {
       revenue = Math.max(0, Math.round((revenue + noise) * 100) / 100);
 
       predictions.push({
-        date: targetDate.toISOString().split('T')[0],
+        date: targetDate.toISOString().split("T")[0],
         revenue,
         bestCase: Math.round(revenue * 1.15 * 100) / 100,
         worstCase: Math.round(revenue * 0.85 * 100) / 100,
@@ -215,13 +226,13 @@ export class AIService {
     return result;
   }
 
-  async getInventoryInsights(businessId: string, branchId?: string): Promise<any[]> {
+  async getInventoryInsights(businessId: string, branchId?: string): Promise<InventoryInsightItem[]> {
     const inventory = await Inventory.find({ businessId, ...(branchId ? { branchId } : {}) }).lean();
-    const productIds = inventory.map(i => i.productId);
+    const productIds = inventory.map((i) => i.productId);
     const products = await Product.find({ _id: { $in: productIds }, businessId, deletedAt: null }).lean();
-    const productMap = new Map(products.map(p => [p._id.toString(), p]));
+    const productMap = new Map(products.map((p) => [p._id.toString(), p]));
 
-    const insights = [];
+    const insights: InventoryInsightItem[] = [];
 
     for (const item of inventory) {
       const product = productMap.get(item.productId);
@@ -230,19 +241,19 @@ export class AIService {
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
       
-      const sales = await Sale.find({
+      const sales = (await Sale.find({
         businessId,
         "items.productId": item.productId,
         status: "CONFIRMED",
         saleDateAt: { $gte: thirtyDaysAgo }
-      }).select("items").lean();
+      }).select("items").lean()) as unknown as ISale[];
 
       const totalSold = sales.reduce((sum, s) => {
-        const line = s.items.find((i: any) => i.productId === item.productId);
+        const line = s.items?.find((i: ISaleItem) => i.productId === item.productId);
         return sum + (line?.quantity || 0);
       }, 0);
 
-      const velocity = totalSold / 30; // units per day
+      const velocity = totalSold / 30;
       const daysRemaining = velocity > 0 ? Math.floor(item.quantityAvailable / velocity) : 999;
 
       let status: "CRITICAL" | "WARNING" | "HEALTHY" | "EXCESS" = "HEALTHY";
@@ -259,7 +270,7 @@ export class AIService {
         daysRemaining: daysRemaining === 999 ? "99+" : daysRemaining,
         status,
         recommendation: status === "CRITICAL" ? "REORDER_NOW" : status === "WARNING" ? "REORDER_SOON" : "STABLE",
-        suggestedOrder: status === "CRITICAL" || status === "WARNING" ? Math.max(Math.round(velocity * 30), (product as any).reorderQuantity || 10) : 0
+        suggestedOrder: status === "CRITICAL" || status === "WARNING" ? Math.max(Math.round(velocity * 30), 10) : 0
       });
     }
 
@@ -271,17 +282,17 @@ export class AIService {
     });
   }
 
-  async getStaffProductivity(businessId: string) {
+  async getStaffProductivity(businessId: string): Promise<StaffProductivityItem[]> {
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-    const sales = await Sale.find({
+    const sales = (await Sale.find({
       businessId,
       status: "CONFIRMED",
       saleDateAt: { $gte: thirtyDaysAgo }
-    }).lean();
+    }).lean()) as unknown as ISale[];
 
-    const staffStats: Record<string, any> = {};
+    const staffStats: Record<string, { staffId: string; totalRevenue: number; orderCount: number; avgOrderValue: number; profitGenerated: number }> = {};
 
     for (const sale of sales) {
       const staffId = sale.createdById || "system";
@@ -296,14 +307,14 @@ export class AIService {
       }
       staffStats[staffId].totalRevenue += sale.totalAmount;
       staffStats[staffId].orderCount += 1;
-      staffStats[staffId].profitGenerated += (sale as any).profitAmount || 0;
+      staffStats[staffId].profitGenerated += sale.profitAmount || 0;
     }
 
     const staffIds = Object.keys(staffStats);
     const users = await User.find({ _id: { $in: staffIds } }).select("firstName lastName").lean();
-    const userMap = new Map(users.map(u => [u._id.toString(), `${u.firstName} ${u.lastName}`]));
+    const userMap = new Map(users.map((u) => [u._id.toString(), `${u.firstName} ${u.lastName}`]));
 
-    const results = Object.values(staffStats).map(s => ({
+    const results: StaffProductivityItem[] = Object.values(staffStats).map((s) => ({
       ...s,
       staffName: userMap.get(s.staffId) || "Unknown Staff",
       avgOrderValue: s.orderCount > 0 ? Math.round((s.totalRevenue / s.orderCount) * 100) / 100 : 0,
@@ -317,20 +328,19 @@ export class AIService {
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-    const sales = await Sale.find({
+    const sales = (await Sale.find({
       businessId,
       status: "CONFIRMED",
       saleDateAt: { $gte: thirtyDaysAgo }
-    }).lean();
+    }).lean()) as unknown as ISale[];
 
     if (sales.length === 0) return { insights: ["No recent sales data to analyze."], metrics: {} };
 
-    // Day of week analysis
     const dayTotals = [0, 0, 0, 0, 0, 0, 0];
     const dayCounts = [0, 0, 0, 0, 0, 0, 0];
     const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
-    sales.forEach(s => {
+    sales.forEach((s) => {
       const d = new Date(s.saleDateAt).getDay();
       dayTotals[d] += s.totalAmount;
       dayCounts[d]++;
@@ -346,7 +356,7 @@ export class AIService {
     const avgTicket = totalRev / sales.length;
     insights.push(`Average transaction value is ₹${avgTicket.toFixed(2)}.`);
 
-    const highValueSales = sales.filter(s => s.totalAmount > avgTicket * 2).length;
+    const highValueSales = sales.filter((s) => s.totalAmount > avgTicket * 2).length;
     if (highValueSales > 0) {
       insights.push(`You had ${highValueSales} high-value transactions (> 2x average) this month.`);
     }

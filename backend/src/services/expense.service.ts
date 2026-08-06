@@ -1,8 +1,22 @@
+import { FilterQuery } from "mongoose";
 import { Expense, IExpense } from "../models";
 import { AppError } from "../utils/AppError";
 
-interface ExpenseListResult {
-  items: any[];
+export interface ExpenseQuery {
+  page?: number | string;
+  limit?: number | string;
+  category?: string;
+  from?: string;
+  to?: string;
+}
+
+export interface ExpenseCategorySummary {
+  _id: string;
+  total: number;
+}
+
+export interface ExpenseListResult {
+  items: IExpense[];
   total: number;
   page: number;
   limit: number;
@@ -10,11 +24,11 @@ interface ExpenseListResult {
 }
 
 export class ExpenseService {
-  async list(businessId: string, query: any): Promise<ExpenseListResult> {
+  async list(businessId: string, query: ExpenseQuery): Promise<ExpenseListResult> {
     const p = Number(query.page || 1);
     const l = Number(query.limit || 20);
     const { category, from, to } = query;
-    const filter: any = { businessId };
+    const filter: FilterQuery<IExpense> = { businessId };
     
     if (category) filter.category = category;
     if (from || to) {
@@ -24,14 +38,14 @@ export class ExpenseService {
     }
 
     const [items, total] = await Promise.all([
-      Expense.find(filter).sort({ date: -1 }).skip((p - 1) * l).limit(l).lean(),
+      Expense.find(filter).sort({ date: -1 }).skip((p - 1) * l).limit(l).lean() as unknown as IExpense[],
       Expense.countDocuments(filter),
     ]);
 
     return { items, total, page: p, limit: l, pages: Math.ceil(total / l) };
   }
 
-  async create(businessId: string, data: any): Promise<IExpense> {
+  async create(businessId: string, data: Partial<IExpense>): Promise<IExpense> {
     return await Expense.create({ businessId, ...data });
   }
 
@@ -41,7 +55,7 @@ export class ExpenseService {
     return result;
   }
 
-  async getSummary(businessId: string, month: number, year: number): Promise<any[]> {
+  async getSummary(businessId: string, month: number, year: number): Promise<ExpenseCategorySummary[]> {
     const start = new Date(year, month - 1, 1);
     const end = new Date(year, month, 0, 23, 59, 59);
 

@@ -1,3 +1,4 @@
+import { FilterQuery } from "mongoose";
 import { DocumentRecord, IDocumentRecord } from "../models";
 import { AppError } from "../utils/AppError";
 import { createLogger } from "../config/logger";
@@ -5,45 +6,43 @@ import { createLogger } from "../config/logger";
 const log = createLogger("DocumentService");
 
 export class DocumentService {
-  async listDocuments(businessId: string, type?: string): Promise<any[]> {
-    const filter: any = { businessId, deletedAt: null };
-    if (type) filter.type = type;
-    return DocumentRecord.find(filter).sort({ createdAt: -1 }).lean();
+  async listDocuments(businessId: string, type?: string): Promise<IDocumentRecord[]> {
+    const filter: FilterQuery<IDocumentRecord> = { businessId, deletedAt: null };
+    if (type) filter.type = type as IDocumentRecord["type"];
+    return DocumentRecord.find(filter).sort({ createdAt: -1 }).lean() as unknown as IDocumentRecord[];
   }
 
-  async getDocument(businessId: string, documentId: string) {
+  async getDocument(businessId: string, documentId: string): Promise<IDocumentRecord> {
     const doc = await DocumentRecord.findOne({ _id: documentId, businessId, deletedAt: null });
     if (!doc) throw new AppError("Document not found", 404);
     return doc;
   }
 
-  async processDocument(businessId: string, file: Express.Multer.File, type: string) {
-    // 1. Create initial record
+  async processDocument(businessId: string, file: Express.Multer.File, type: string): Promise<IDocumentRecord> {
     const doc = await DocumentRecord.create({
       businessId,
       type,
       fileName: file.originalname,
-      fileUrl: `/uploads/${file.filename}`, // Assuming a static uploads folder
+      fileUrl: `/uploads/${file.filename}`,
       fileType: file.mimetype,
       fileSize: file.size,
       status: "PENDING"
     });
 
-    // 2. Simulate AI Data Extraction
-    // In a real app, this would call an OCR API
-    setTimeout(() => this.runAiExtraction(doc._id), 2000);
+    setTimeout(() => {
+      this.runAiExtraction(doc._id.toString());
+    }, 2000);
 
     return doc;
   }
 
-  private async runAiExtraction(docId: string) {
+  private async runAiExtraction(docId: string): Promise<void> {
     try {
       const doc = await DocumentRecord.findById(docId);
       if (!doc) return;
 
       log.info("Running AI Extraction for document", { docId });
 
-      // Simulate extraction logic
       const mockData = {
         vendorName: "Amazon Web Services",
         date: new Date(),
@@ -59,8 +58,9 @@ export class DocumentService {
       await doc.save();
 
       log.info("AI Extraction completed", { docId });
-    } catch (e: any) {
-      log.error("AI Extraction failed", { error: e.message, docId });
+    } catch (e) {
+      const errMsg = e instanceof Error ? e.message : String(e);
+      log.error("AI Extraction failed", { error: errMsg, docId });
       await DocumentRecord.findByIdAndUpdate(docId, { status: "FAILED" });
     }
   }

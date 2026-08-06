@@ -1,24 +1,24 @@
 import { Response, NextFunction } from "express";
-import { customerService } from "../services/customer.service";
+import { customerService, CustomerQuery } from "../services/customer.service";
 import { sendSuccess } from "../utils/response";
 import { AuthRequest } from "../middlewares/auth.middleware";
 
 export const customerController = {
-  async list(req: AuthRequest, res: Response, next: NextFunction) {
+  async list(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      const data = await customerService.list(req.user!.businessId!, req.query);
+      const data = await customerService.list(req.user!.businessId!, req.query as CustomerQuery);
       sendSuccess(res, data);
     } catch (e) { next(e); }
   },
 
-  async getById(req: AuthRequest, res: Response, next: NextFunction) {
+  async getById(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const data = await customerService.getById(req.params["id"]!, req.user!.businessId!);
       sendSuccess(res, data);
     } catch (e) { next(e); }
   },
 
-  async recordTransaction(req: AuthRequest, res: Response, next: NextFunction) {
+  async recordTransaction(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const { type, amount, referenceId, notes, paymentMethod } = req.body;
       const data = await customerService.recordTransaction(
@@ -34,14 +34,14 @@ export const customerController = {
     } catch (e) { next(e); }
   },
 
-  async getTransactions(req: AuthRequest, res: Response, next: NextFunction) {
+  async getTransactions(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const data = await customerService.getTransactions(req.user!.businessId!, req.params["id"]!);
       sendSuccess(res, data);
     } catch (e) { next(e); }
   },
   
-  async getTrustScore(req: AuthRequest, res: Response, next: NextFunction) {
+  async getTrustScore(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const data = await customerService.getTrustScore(req.user!.businessId!, req.params["id"]!);
       sendSuccess(res, data);

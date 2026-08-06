@@ -8,6 +8,11 @@ import routes from "./routes";
 import { AppError } from "./utils/AppError";
 import { sendError } from "./utils/response";
 
+interface MongoError extends Error {
+  code?: number;
+  keyValue?: Record<string, unknown>;
+}
+
 const log = createLogger("Server");
 const app = express();
 const PORT = Number(process.env["PORT"] ?? 4000);
@@ -22,11 +27,16 @@ app.use(cors({
 app.use(express.json({ limit: "2mb" }));
 app.use(express.urlencoded({ extended: true }));
 
+// Health Check Endpoint for Render
+app.get("/health", (_req: Request, res: Response) => {
+  res.status(200).json({ status: "ok", service: "NexusAI Backend", timestamp: new Date().toISOString() });
+});
+
 // ── Routes ────────────────────────────────────────────────────
 app.use(API_PREFIX, routes);
 
 // ── 404 ───────────────────────────────────────────────────────
-app.use((req, res) => {
+app.use((req: Request, res: Response) => {
   sendError(res, `Route ${req.method} ${req.path} not found`, 404);
 });
 
@@ -40,8 +50,9 @@ app.use((err: Error, req: Request, res: Response, _next: NextFunction) => {
     return sendError(res, err.message, 400);
   }
   // Mongoose duplicate key
-  if ((err as any).code === 11000) {
-    const field = Object.keys((err as any).keyValue ?? {})[0];
+  const mongoErr = err as MongoError;
+  if (mongoErr.code === 11000) {
+    const field = mongoErr.keyValue ? Object.keys(mongoErr.keyValue)[0] : "Field";
     return sendError(res, `${field} already exists`, 409);
   }
   log.error("Unhandled error", { error: err.message, stack: err.stack });
@@ -49,14 +60,14 @@ app.use((err: Error, req: Request, res: Response, _next: NextFunction) => {
 });
 
 // ── Start ─────────────────────────────────────────────────────
-async function bootstrap() {
+async function bootstrap(): Promise<void> {
   try {
     await connectDB();
     app.listen(PORT, () => {
       log.info(`NexusAI running on port ${PORT}`, { prefix: API_PREFIX });
     });
   } catch (err) {
-    log.error("Failed to start", { error: err });
+    log.error("Failed to start", { error: err instanceof Error ? err.message : String(err) });
     process.exit(1);
   }
 }

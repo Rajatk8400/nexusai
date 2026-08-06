@@ -1,5 +1,15 @@
 import mongoose, { Schema, Document, Model } from "mongoose";
 
+export interface IPurchaseItem {
+  productId: string;
+  productName: string;
+  quantity: number;
+  unitCost: number;
+  taxRate: number;
+  taxAmount: number;
+  totalAmount: number;
+}
+
 export interface IPurchase extends Document<string> {
   _id: string;
   businessId: string;
@@ -7,15 +17,7 @@ export interface IPurchase extends Document<string> {
   supplierId: string;
   purchaseNumber: string;
   purchaseDateAt: Date;
-  items: {
-    productId: string;
-    productName: string;
-    quantity: number;
-    unitCost: number;
-    taxRate: number;
-    taxAmount: number;
-    totalAmount: number;
-  }[];
+  items: IPurchaseItem[];
   subtotal: number;
   taxAmount: number;
   totalAmount: number;

@@ -2,14 +2,15 @@ import { Response, NextFunction } from "express";
 import { Business } from "../models";
 import { sendSuccess } from "../utils/response";
 import { AuthRequest } from "../middlewares/auth.middleware";
+import { AppError } from "../utils/AppError";
 
 export const businessController = {
-  async upgrade(req: AuthRequest, res: Response, next: NextFunction) {
+  async upgrade(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      const { planId, transactionId } = req.body; // SIX_MONTHS or YEARLY
+      const { planId, transactionId } = req.body;
       const businessId = req.user!.businessId!;
 
-      if (!transactionId) throw new Error("Transaction ID is required for upgrade");
+      if (!transactionId) throw new AppError("Transaction ID is required for upgrade", 400);
 
       const business = await Business.findByIdAndUpdate(
         businessId,
@@ -25,7 +26,7 @@ export const businessController = {
     } catch (e) { next(e); }
   },
 
-  async update(req: AuthRequest, res: Response, next: NextFunction) {
+  async update(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const businessId = req.user!.businessId!;
       const { name, upiId, legalName, gstNumber, pan, email, phone, address, settings } = req.body;

@@ -1,6 +1,6 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { User, Business, Branch, IUser } from "../models";
+import { User, Business, Branch, IUser, IBusiness, IBranch } from "../models";
 import { createLogger } from "../config/logger";
 import { AppError } from "../utils/AppError";
 
@@ -15,20 +15,33 @@ const ROLE_LEVELS: Record<string, number> = {
   VIEWER: 10,
 };
 
-function signAccess(payload: object): string {
+export interface TokenPayload {
+  id: string;
+  email: string;
+  role: string;
+  roleLevel: number;
+  businessId: string | null;
+  branchId: string | null;
+}
+
+export interface RefreshTokenPayload {
+  id: string;
+}
+
+function signAccess(payload: TokenPayload): string {
   return jwt.sign(payload, process.env["JWT_SECRET"]!, {
     expiresIn: process.env["JWT_EXPIRES_IN"] ?? "7d",
   } as jwt.SignOptions);
 }
 
-function signRefresh(payload: object): string {
+function signRefresh(payload: RefreshTokenPayload): string {
   return jwt.sign(payload, process.env["JWT_REFRESH_SECRET"]!, {
     expiresIn: process.env["JWT_REFRESH_EXPIRES_IN"] ?? "30d",
   } as jwt.SignOptions);
 }
 
 function buildTokens(user: IUser) {
-  const payload = {
+  const payload: TokenPayload = {
     id: user._id.toString(),
     email: user.email,
     role: user.role,
@@ -41,21 +54,22 @@ function buildTokens(user: IUser) {
   return { accessToken, refreshToken };
 }
 
+export interface RegisterInput {
+  email: string;
+  password: string;
+  firstName: string;
+  lastName: string;
+  businessName: string;
+}
+
 export class AuthService {
-  async register(data: {
-    email: string;
-    password: string;
-    firstName: string;
-    lastName: string;
-    businessName: string;
-  }) {
+  async register(data: RegisterInput) {
     const existing = await User.findOne({ email: data.email.toLowerCase() });
     if (existing) throw new AppError("Email already registered", 409);
 
-    // Create business
     const slug = data.businessName.toLowerCase().replace(/[^a-z0-9]/g, "-").replace(/-+/g, "-");
     const uniqueSlug = `${slug}-${Date.now().toString(36)}`;
-    const shortId = `NX-${Math.floor(1000 + Math.random() * 9000)}`; // e.g. NX-4821
+    const shortId = `NX-${Math.floor(1000 + Math.random() * 9000)}`;
     const business = await Business.create({
       name: data.businessName,
       slug: uniqueSlug,
@@ -63,10 +77,9 @@ export class AuthService {
       status: "ACTIVE",
       plan: "TRIAL",
       planStatus: "TRIAL",
-      planExpiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days trial
+      planExpiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
     });
 
-    // Create head-office branch
     const branch = await Branch.create({
       businessId: business._id.toString(),
       name: "Head Office",
@@ -75,7 +88,6 @@ export class AuthService {
       isActive: true,
     });
 
-    // Create owner user
     const passwordHash = await bcrypt.hash(data.password, 12);
     const user = await User.create({
       email: data.email.toLowerCase(),
@@ -89,7 +101,6 @@ export class AuthService {
       isActive: true,
     });
 
-    // Update business ownerId
     await Business.findByIdAndUpdate(business._id, { ownerId: user._id.toString() });
 
     const { accessToken, refreshToken } = buildTokens(user);
@@ -112,10 +123,10 @@ export class AuthService {
         id: business._id.toString(), 
         name: business.name, 
         slug: business.slug,
-        shortId: (business as any).shortId,
-        plan: (business as any).plan,
-        planStatus: (business as any).planStatus,
-        planExpiresAt: (business as any).planExpiresAt
+        shortId: business.shortId,
+        plan: business.plan,
+        planStatus: business.planStatus,
+        planExpiresAt: business.planExpiresAt
       },
       branch: { id: branch._id.toString(), name: branch.name, code: branch.code },
       accessToken,
@@ -132,10 +143,10 @@ export class AuthService {
     if (!valid) throw new AppError("Invalid email or password", 401);
 
     const business = user.businessId
-      ? await Business.findById(user.businessId).lean()
+      ? (await Business.findById(user.businessId).lean() as IBusiness | null)
       : null;
     const branch = user.branchId
-      ? await Branch.findById(user.branchId).lean()
+      ? (await Branch.findById(user.branchId).lean() as IBranch | null)
       : null;
 
     const { accessToken, refreshToken } = buildTokens(user);
@@ -157,16 +168,16 @@ export class AuthService {
       business: business
         ? { 
             id: business._id.toString(), 
-            name: (business as any).name, 
-            slug: (business as any).slug,
-            shortId: (business as any).shortId,
-            plan: (business as any).plan,
-            planStatus: (business as any).planStatus,
-            planExpiresAt: (business as any).planExpiresAt
+            name: business.name, 
+            slug: business.slug,
+            shortId: business.shortId,
+            plan: business.plan,
+            planStatus: business.planStatus,
+            planExpiresAt: business.planExpiresAt
           }
         : null,
       branch: branch
-        ? { id: branch._id.toString(), name: (branch as any).name, code: (branch as any).code }
+        ? { id: branch._id.toString(), name: branch.name, code: branch.code }
         : null,
       accessToken,
       refreshToken,
@@ -174,9 +185,9 @@ export class AuthService {
   }
 
   async refreshTokens(token: string) {
-    let payload: any;
+    let payload: RefreshTokenPayload;
     try {
-      payload = jwt.verify(token, process.env["JWT_REFRESH_SECRET"]!);
+      payload = jwt.verify(token, process.env["JWT_REFRESH_SECRET"]!) as unknown as RefreshTokenPayload;
     } catch {
       throw new AppError("Invalid or expired refresh token", 401);
     }
@@ -190,7 +201,7 @@ export class AuthService {
     return { accessToken, refreshToken };
   }
 
-  async logout(userId: string) {
+  async logout(userId: string): Promise<void> {
     await User.findByIdAndUpdate(userId, { refreshToken: null });
   }
 
@@ -198,8 +209,8 @@ export class AuthService {
     const user = await User.findById(userId).select("-passwordHash -refreshToken");
     if (!user) throw new AppError("User not found", 404);
     
-    const business = user.businessId ? await Business.findById(user.businessId).lean() : null;
-    const branch = user.branchId ? await Branch.findById(user.branchId).lean() : null;
+    const business = user.businessId ? (await Business.findById(user.businessId).lean() as IBusiness | null) : null;
+    const branch = user.branchId ? (await Branch.findById(user.branchId).lean() as IBranch | null) : null;
 
     return {
       user: {
@@ -213,18 +224,18 @@ export class AuthService {
         branchId: user.branchId ?? null,
       },
       business: business ? {
-        id: (business as any)._id.toString(),
-        name: (business as any).name,
-        slug: (business as any).slug,
-        shortId: (business as any).shortId,
-        plan: (business as any).plan,
-        planStatus: (business as any).planStatus,
-        planExpiresAt: (business as any).planExpiresAt,
+        id: business._id.toString(),
+        name: business.name,
+        slug: business.slug,
+        shortId: business.shortId,
+        plan: business.plan,
+        planStatus: business.planStatus,
+        planExpiresAt: business.planExpiresAt,
       } : null,
       branch: branch ? {
-        id: (branch as any)._id.toString(),
-        name: (branch as any).name,
-        code: (branch as any).code,
+        id: branch._id.toString(),
+        name: branch.name,
+        code: branch.code,
       } : null,
     };
   }

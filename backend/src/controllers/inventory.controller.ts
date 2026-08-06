@@ -4,7 +4,7 @@ import { sendSuccess } from "../utils/response";
 import { AuthRequest } from "../middlewares/auth.middleware";
 
 export const inventoryController = {
-  async getLowStock(req: AuthRequest, res: Response, next: NextFunction) {
+  async getLowStock(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const items = await inventoryService.getLowStock(
         req.user!.businessId!,
@@ -15,7 +15,7 @@ export const inventoryController = {
     } catch (e) { next(e); }
   },
 
-  async adjust(req: AuthRequest, res: Response, next: NextFunction) {
+  async adjust(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const { productId, quantity, type, notes, unitCost } = req.body;
       const inv = await inventoryService.adjust(
@@ -32,7 +32,7 @@ export const inventoryController = {
     } catch (e) { next(e); }
   },
 
-  async getMovements(req: AuthRequest, res: Response, next: NextFunction) {
+  async getMovements(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const movements = await inventoryService.getMovements(
         req.user!.businessId!,
@@ -44,7 +44,7 @@ export const inventoryController = {
     } catch (e) { next(e); }
   },
 
-  async getStock(req: AuthRequest, res: Response, next: NextFunction) {
+  async getStock(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const stock = await inventoryService.getStock(
         req.user!.businessId!,
