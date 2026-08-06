@@ -353,9 +353,14 @@ export default function LoginPage() {
             </form>
           )}
 
-          <p className="text-center text-xs text-slate-500 mt-4">
-            By continuing, you agree to our Terms of Service and Privacy Policy.
-          </p>
+          <div className="mt-6 pt-4 border-t border-slate-700/50 text-center">
+            <p className="text-center text-xs text-slate-500">
+              By continuing, you agree to our Terms of Service and Privacy Policy.
+            </p>
+            <p className="text-[11px] font-semibold text-slate-400 mt-2 tracking-wide">
+              Designed & Developed by <span className="text-blue-400 font-bold">Veltrix Technologies</span>
+            </p>
+          </div>
         </div>
       </div>
     </div>

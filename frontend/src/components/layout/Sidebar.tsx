@@ -13,9 +13,9 @@ function BoxIcon({ size = 18, className = "" }: { size?: number; className?: str
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor"
       strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
-      <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
-      <line x1="12" y1="22.08" x2="12" y2="12"/>
+      <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+      <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
+      <line x1="12" y1="22.08" x2="12" y2="12" />
     </svg>
   );
 }
@@ -38,27 +38,27 @@ function CalculatorIcon({ size = 18, className = "" }: { size?: number; classNam
 }
 
 const navItems = [
-  { id: "dashboard",    label: "Dashboard",       path: "/dashboard",    Icon: GridIcon },
+  { id: "dashboard", label: "Dashboard", path: "/dashboard", Icon: GridIcon },
   { id: "ca-workspace", label: "AI CA Workspace", path: "/ca-workspace", Icon: CalculatorIcon, badge: "Pro" },
-  { id: "products",     label: "Products",        path: "/products",     Icon: BoxIcon },
-  { id: "purchases",    label: "Stock In",         path: "/purchases",    Icon: PackageIcon },
-  { id: "sales",        label: "Sales",           path: "/sales",        Icon: PlusIcon },
-  { id: "inventory",    label: "Inventory",       path: "/inventory",    Icon: DownloadIcon },
-  { id: "analytics",    label: "Analytics",       path: "/analytics",    Icon: ChartIcon },
-  { id: "customers",    label: "Customers",       path: "/customers",    Icon: UsersIcon },
-  { id: "expenses",     label: "Expenses",        path: "/expenses",     Icon: ReceiptIcon },
-  { id: "documents",    label: "Doc Engine",       path: "/documents",    Icon: FileIcon, badge: "AI" },
-  { id: "ai-insights",  label: "AI Insights",     path: "/ai-insights",  Icon: SparkleIcon, badge: "New" },
-  { id: "reports",      label: "Reports",         path: "/reports",      Icon: FileIcon },
-  { id: "settings",     label: "Settings",        path: "/settings",     Icon: GearIcon },
+  { id: "products", label: "Products", path: "/products", Icon: BoxIcon },
+  { id: "purchases", label: "Stock In", path: "/purchases", Icon: PackageIcon },
+  { id: "sales", label: "Sales", path: "/sales", Icon: PlusIcon },
+  { id: "inventory", label: "Inventory", path: "/inventory", Icon: DownloadIcon },
+  { id: "analytics", label: "Analytics", path: "/analytics", Icon: ChartIcon },
+  { id: "customers", label: "Customers", path: "/customers", Icon: UsersIcon },
+  { id: "expenses", label: "Expenses", path: "/expenses", Icon: ReceiptIcon },
+  { id: "documents", label: "Doc Engine", path: "/documents", Icon: FileIcon, badge: "AI" },
+  { id: "ai-insights", label: "AI Insights", path: "/ai-insights", Icon: SparkleIcon, badge: "New" },
+  { id: "reports", label: "Reports", path: "/reports", Icon: FileIcon },
+  { id: "settings", label: "Settings", path: "/settings", Icon: GearIcon },
 ];
 
 function ReceiptIcon({ size = 18, className = "" }: { size?: number; className?: string }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1-2-1Z"/>
-      <path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/>
-      <path d="M12 17.5V6.5"/>
+      <path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1-2-1Z" />
+      <path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8" />
+      <path d="M12 17.5V6.5" />
     </svg>
   );
 }
@@ -66,10 +66,10 @@ function ReceiptIcon({ size = 18, className = "" }: { size?: number; className?:
 function PackageIcon({ size = 18, className = "" }: { size?: number; className?: string }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <path d="m7.5 4.27 9 5.15"/>
-      <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/>
-      <path d="m3.27 6.96 8.73 5.05 8.73-5.05"/>
-      <path d="M12 22.08V12"/>
+      <path d="m7.5 4.27 9 5.15" />
+      <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z" />
+      <path d="m3.27 6.96 8.73 5.05 8.73-5.05" />
+      <path d="M12 22.08V12" />
     </svg>
   );
 }
@@ -85,7 +85,7 @@ export default function Sidebar({ collapsed, mobileOpen, onToggle, onClose }: Si
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  const filteredNavItems = user?.role === "SUPER_ADMIN" 
+  const filteredNavItems = user?.role === "SUPER_ADMIN"
     ? [...navItems, { id: "admin", label: "Admin Panel", path: "/admin", Icon: ShieldIcon }]
     : navItems;
 
@@ -93,16 +93,15 @@ export default function Sidebar({ collapsed, mobileOpen, onToggle, onClose }: Si
     <>
       {/* Mobile Overlay */}
       {mobileOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-40 lg:hidden"
           onClick={onClose}
         />
       )}
 
       <aside
-        className={`fixed inset-y-0 left-0 z-50 lg:static lg:flex flex-col h-screen bg-slate-900 border-r border-slate-800 transition-all duration-300 flex-shrink-0 ${
-          collapsed ? "lg:w-16" : "lg:w-60"
-        } ${mobileOpen ? "translate-x-0 w-64" : "-translate-x-full lg:translate-x-0"}`}
+        className={`fixed inset-y-0 left-0 z-50 lg:static lg:flex flex-col h-screen bg-slate-900 border-r border-slate-800 transition-all duration-300 flex-shrink-0 ${collapsed ? "lg:w-16" : "lg:w-60"
+          } ${mobileOpen ? "translate-x-0 w-64" : "-translate-x-full lg:translate-x-0"}`}
       >
         {/* Logo */}
         <div className="flex items-center gap-3 px-4 py-5 border-b border-slate-800">
@@ -123,10 +122,9 @@ export default function Sidebar({ collapsed, mobileOpen, onToggle, onClose }: Si
               to={path}
               onClick={onClose}
               className={({ isActive }) =>
-                `w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 ${
-                  isActive
-                    ? "bg-blue-600 text-white shadow-lg shadow-blue-900/40"
-                    : "text-slate-400 hover:text-white hover:bg-slate-800"
+                `w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 ${isActive
+                  ? "bg-blue-600 text-white shadow-lg shadow-blue-900/40"
+                  : "text-slate-400 hover:text-white hover:bg-slate-800"
                 }`
               }
               title={collapsed ? label : undefined}
@@ -159,7 +157,7 @@ export default function Sidebar({ collapsed, mobileOpen, onToggle, onClose }: Si
 
         <div className={`px-4 py-3 text-center border-t border-slate-800/50 ${collapsed ? "hidden" : "block"}`}>
           <p className="text-[9px] font-bold text-slate-600 uppercase tracking-widest">
-            Developed by <span className="text-slate-400">MakeEasy Group</span>
+            Developed by <span className="text-slate-400">Veltrix Technologies</span>
           </p>
         </div>
       </aside>
