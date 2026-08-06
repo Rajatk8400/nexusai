@@ -2,8 +2,6 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { ApiError } from "../../services/api";
-import Button from "../../components/ui/Button";
-import Input from "../../components/ui/Input";
 import Alert from "../../components/ui/Alert";
 import { SparkleIcon } from "../../components/ui/Icons";
 
@@ -38,6 +36,22 @@ export default function LoginPage() {
       navigate("/dashboard");
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Login failed. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDemoLogin = async () => {
+    setMode("login");
+    setEmail("demo@nexusai.com");
+    setPassword("demo1234");
+    setLoading(true);
+    setError(null);
+    try {
+      await login("demo@nexusai.com", "demo1234");
+      navigate("/dashboard");
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Demo login failed. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -80,6 +94,37 @@ export default function LoginPage() {
 
         {/* Card */}
         <div className="bg-slate-800/60 backdrop-blur-xl border border-slate-700/50 rounded-2xl p-8 shadow-2xl">
+
+          {/* Demo Account Credentials Banner */}
+          <div className="mb-6 p-4 bg-gradient-to-r from-blue-950/60 via-indigo-950/60 to-slate-900/80 border border-blue-500/40 rounded-xl shadow-inner">
+            <div className="flex items-center justify-between mb-2">
+              <span className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-400 uppercase tracking-wider">
+                <SparkleIcon size={14} className="text-blue-400 animate-pulse" /> Demo Credentials
+              </span>
+              <span className="text-[10px] font-semibold bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-full border border-emerald-400/30">
+                No Registration Needed
+              </span>
+            </div>
+            <div className="grid grid-cols-2 gap-2 text-xs font-mono bg-slate-950/80 p-2.5 rounded-lg border border-slate-700/60 mb-3">
+              <div>
+                <span className="text-slate-400 block text-[10px]">User ID (Email):</span>
+                <span className="text-emerald-400 font-bold select-all">demo@nexusai.com</span>
+              </div>
+              <div>
+                <span className="text-slate-400 block text-[10px]">Password:</span>
+                <span className="text-emerald-400 font-bold select-all">demo1234</span>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={handleDemoLogin}
+              disabled={loading}
+              className="w-full py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-900/50 disabled:opacity-60"
+            >
+              <span>⚡ One-Click Demo Login</span>
+            </button>
+          </div>
+
           {/* Mode toggle */}
           <div className="flex bg-slate-900/60 rounded-xl p-1 mb-6">
             {(["login", "register"] as Mode[]).map((m) => (
